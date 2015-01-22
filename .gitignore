@@ -1,0 +1,4 @@
+# Mailbox with all the chats for privacy
+*.mbox
+# Text files and jsons with data may contain chat info too.
+*.data.json
