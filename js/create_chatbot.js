@@ -89,9 +89,38 @@ function getEmails(lines) {
     console.log(from_emails[key]);
     var eml = key.replace("<","&lt;");
     eml = eml.replace(">","&gt;");
-    $(".from_emails").append('<input type="checkbox" name="email" value="' + from_emails[key] + '"> ' + eml + '&nbsp;&nbsp;&nbsp;&nbsp;- name ' + from_emails[key] + ' <br>');
+    $(".from_emails").append('<input type="checkbox" name="femail" value="' + key + '"> ' + eml + '&nbsp;&nbsp;&nbsp;&nbsp;- name ' + from_emails[key] + ' <br>');
   });
-  $(".from_emails").append('<input type="submit">');
+
+  $(".to_emails").append('<p> All "To" emails. Choose which ones for your chatbot');
+  Object.keys(to_emails).forEach(function(key) {
+    console.log(to_emails[key]);
+    var eml = key.replace("<","&lt;");
+    eml = eml.replace(">","&gt;");
+    $(".to_emails").append('<input type="checkbox" name="temail" value="' + key + '"> ' + eml + '&nbsp;&nbsp;&nbsp;&nbsp;- name ' + to_emails[key] + ' <br>');
+  });
+  $(".choose_emails").append('<input id="tos" type="button" value="Choose emails">');
+  document.getElementById('tos').addEventListener('click', handleToSelect, false);
+
+}
+
+function handleToSelect(evt) {
+  var chosen_from = [];
+  var chosen_to = [];
+  $.each($("input[name='temail']:checked"), function(){            
+    chosen_to.push($(this).val());
+    var eml = $(this).val();
+    eml = eml.replace(">","&gt;");
+    eml = eml.replace("<","&lt;");
+    $(".chosen_to").append('<p>' + eml + '</p> <br>');
+  });
+  $.each($("input[name='femail']:checked"), function(){            
+    chosen_from.push($(this).val());
+    var eml = $(this).val();
+    eml = eml.replace(">","&gt;");
+    eml = eml.replace("<","&lt;");
+    $(".chosen_from").append('<p>' + eml + '</p> <br>');
+  });
 }
 
 document.getElementById('files').addEventListener('change', handleFileSelect, false);
