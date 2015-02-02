@@ -83,10 +83,10 @@ function getEmails(lines) {
         to_emails[email] = person;
     } 
   } 
-  console.log(from_emails);
+  //console.log(from_emails);
   $(".from_emails").append('<p> All "From" emails. Choose which ones for your chatbot');
   Object.keys(from_emails).forEach(function(key) {
-    console.log(from_emails[key]);
+    //console.log(from_emails[key]);
     var eml = key.replace("<","&lt;");
     eml = eml.replace(">","&gt;");
     $(".from_emails").append('<input type="checkbox" name="femail" value="' + key + '"> ' + eml + '&nbsp;&nbsp;&nbsp;&nbsp;- name ' + from_emails[key] + ' <br>');
@@ -94,7 +94,7 @@ function getEmails(lines) {
 
   $(".to_emails").append('<p> All "To" emails. Choose which ones for your chatbot');
   Object.keys(to_emails).forEach(function(key) {
-    console.log(to_emails[key]);
+    //console.log(to_emails[key]);
     var eml = key.replace("<","&lt;");
     eml = eml.replace(">","&gt;");
     $(".to_emails").append('<input type="checkbox" name="temail" value="' + key + '"> ' + eml + '&nbsp;&nbsp;&nbsp;&nbsp;- name ' + to_emails[key] + ' <br>');
@@ -121,7 +121,77 @@ function handleToSelect(evt) {
 }
 
 function makeChatbot (f,t) {
-  console.log('fuck off' + f);
+  var one_mail = [];
+  var bot_words = [];
+  var person_words = [];
+  for (var ii = 0; ii < lines.length; ii ++) {
+    var ln = lines[ii];
+    if (ln.match(/\@xxx/)) {
+      if (one_mail.length === 0) {
+        one_mail.push(ln);
+        continue;
+      } else {
+        var from_switch = 0;
+        var to_switch = 0;
+        var multipart_switch = 0;
+        for (var jj = 0; jj < one_mail.length; jj++) {
+          var line2 = one_mail[jj];
+          if (line2.match(/Content-Type: multipart/)) {
+            multipart_switch = 1;
+          } else if (line2.match(/X-Gmail-Labels/)) {
+            var chat_label_test = line2.split(/\s+/);
+            if (chat_label_test[1] !== 'Chat')
+              break;
+          } else if (line2.match(/From:/)) {
+            var from_line = line2.split(/\s+/);
+            var from_test = from_line.shift();
+            if (from_test !== "From:")
+              continue;
+            var email_address = from_line.pop();
+            for (kk in f) {
+              if (email_address === f[kk]) 
+                from_switch = 1;
+            }
+          } else if (line2.match(/To:/)) {
+            var to_line = line2.split(/\s+/);
+            var to_test = to_line.shift();
+            if (to_test !== "To:")
+              continue;
+            var email_address = to_line.pop();
+            for (kk in f) {
+              if (email_address === f[kk]) 
+                to_switch = 1;
+            }
+          } else if (line2.match(/Content-Type: text/)) {
+            if ( (from_switch === 0) && (to_switch === 0) )
+              break;
+            if (multipart_switch === 0) {
+              if (to_switch === 1) {
+                var bits = one_mail[jj+3].split(/\s+/); // get mail body, three lines after content-type line
+                for (var kk = 0; kk < bits.length; kk++) {
+                  bot_words.push(bits[kk]);
+                }
+                bits.push('ENDEND'); // mark the end of this mail
+                //make_markov(bits);
+              } else if (from_switch === 1) {
+                var bits = one_mail[jj+3].split(/\s+/); // get mail body, three lines after content-type line
+                for (var kk = 0; kk < bits.length; kk++) {
+                  person_words.push(bits[kk]);
+                }
+              }
+            }
+          }
+        }
+        one_mail = [];
+        one_mail.push(ln);
+      }
+    } else {
+      one_mail.push(ln);
+    }
+  }
+  console.log(bot_words);
+  console.log(bot_words[0]);
 }
+
 
 document.getElementById('files').addEventListener('change', handleFileSelect, false);
