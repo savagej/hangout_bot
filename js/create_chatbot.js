@@ -109,18 +109,19 @@ function handleToSelect(evt) {
   var chosen_to = [];
   $.each($("input[name='temail']:checked"), function(){            
     chosen_to.push($(this).val());
-    var eml = $(this).val();
-    eml = eml.replace(">","&gt;");
-    eml = eml.replace("<","&lt;");
-    $(".chosen_to").append('<p>' + eml + '</p> <br>');
   });
   $.each($("input[name='femail']:checked"), function(){            
     chosen_from.push($(this).val());
-    var eml = $(this).val();
-    eml = eml.replace(">","&gt;");
-    eml = eml.replace("<","&lt;");
-    $(".chosen_from").append('<p>' + eml + '</p> <br>');
   });
+  var conf = confirm('You have chosen to make a chatbot of ' + chosen_from + ' speaking to ' + chosen_to);
+  if (conf) {
+    makeChatbot(chosen_from,chosen_to);
+  } else {
+  }
+}
+
+function makeChatbot (f,t) {
+  console.log('fuck off' + f);
 }
 
 document.getElementById('files').addEventListener('change', handleFileSelect, false);
