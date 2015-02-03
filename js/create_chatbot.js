@@ -116,8 +116,8 @@ function handleToSelect(evt) {
   });
   var conf = confirm('You have chosen to make a chatbot of ' + chosen_from + ' speaking to ' + chosen_to);
   if (conf) {
+    $('.chatbot').css('opacity', '100');
     parseEmails(chosen_from,chosen_to);
-
   } else {
   }
 }
@@ -190,7 +190,7 @@ function parseEmails (f,t) {
                 var first_two_words = mail_words[0] + " " + mail_words[1];
                 start_of_reply[last_person_words].push(first_two_words);
                 // 
-                for (var kk = 1; kk < mail_words.length - 2; kk++) {
+                for (var kk = 0; kk < mail_words.length - 2; kk++) {
                   var two_words = mail_words[kk] + " " + mail_words[kk+1];
                   if (markov_word[two_words] === undefined) 
                     markov_word[two_words] = [];
