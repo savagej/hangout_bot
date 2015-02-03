@@ -43,7 +43,7 @@ foreach my $emails (keys %to_people) {
 
 # Loop through the people that have sent mails and extract the body of each mail they've sent
 #foreach my $emails (keys %from_people) {
-foreach my $emails ("<cartyjulie\@gmail.com>") {
+foreach my $emails ("<mousemicky\@gmail.com>") {
   open (my $fh, "<", "$input") or die "Can't open input";
   print "Messages from $emails:\nSTART\n";
   <>;

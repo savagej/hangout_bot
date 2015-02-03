@@ -13,13 +13,13 @@ while (<$stp_fh>) {
 }
 my $input = shift @ARGV;
 
-my (@john_words,@julie_words);
+my (@john_words,@micky_words);
 
 # Loop through the people that have sent mails and extract the body of each mail they've sent
 #foreach my $emails (keys %from_people) {
 #my $from_or_to = "To:";
 my $from_or_to = "From:";
-my @emails = ("<carty.julie\@gmail.com>","<cartyjulie\@gmail.com>");
+my @emails = ("<mouse.micky\@gmail.com>","<mousemicky\@gmail.com>");
 open (my $fh, "<", "$input") or die "Can't open input";
 my @one_mail;
 while (<$fh>) {
@@ -38,7 +38,7 @@ while (<$fh>) {
   }
 }
 
-&print_out("Julie",@julie_words);
+&print_out("Micky",@micky_words);
 &print_out("John",@john_words);
  
 sub parse_one_mail {
@@ -87,7 +87,7 @@ sub parse_one_mail {
         #print "$$mail_ref[$array_count-6] : $$mail_ref[$array_count+3]\n";
         #print "$$mail_ref[$array_count+3]\n";
         push @john_words, split(/\s+/,$$mail_ref[$array_count+3]) if $to_switch == 1;
-        push @julie_words, split(/\s+/,$$mail_ref[$array_count+3]) if $from_switch == 1;
+        push @micky_words, split(/\s+/,$$mail_ref[$array_count+3]) if $from_switch == 1;
         last;
       } else {
         #print STDERR "Analysing from lines $array_count..$#$mail_ref\n";
@@ -120,10 +120,10 @@ sub analyse_multipart {
         shift @bits;
         push @john_words, @bits;
         #print "JOHN: @bits\n";
-      } elsif ($split_line[$ii-1] =~ /Julie/) {
+      } elsif ($split_line[$ii-1] =~ /Micky/) {
         my @bits = split(/\s+/,$split_line[$ii]);
         shift @bits;
-        push @julie_words, @bits;
+        push @micky_words, @bits;
         #print "JULIE: @bits\n";
       } else {
         #print "NOTHING: $split_line[$ii]\n";

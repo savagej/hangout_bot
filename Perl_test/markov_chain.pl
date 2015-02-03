@@ -14,16 +14,15 @@ while (<$stp_fh>) {
 }
 my $input = shift @ARGV;
 
-my (@john_words,@julie_words);
-my ($last_john_words,$last_julie_words);
-my (%markov,%first_john_keys,%first_julie_keys);
+my (@john_words,@micky_words);
+my ($last_john_words,$last_micky_words);
+my (%markov,%first_john_keys,%first_micky_keys);
 
 # Loop through the people that have sent mails and extract the body of each mail they've sent
 #foreach my $emails (keys %from_people) {
 #my $from_or_to = "To:";
 my $from_or_to = "From:";
-#my @emails = ("<carty.julie\@gmail.com>","<cartyjulie\@gmail.com>");
-my @emails = ("<rooree93\@gmail.com>","<rooree93\@gmail.com>");
+#my @emails = ("<mouse.micky\@gmail.com>","<mousemicky\@gmail.com>");
 open (my $fh, "<", "$input") or die "Can't open input";
 my @one_mail;
 while (<$fh>) {
@@ -42,8 +41,8 @@ while (<$fh>) {
   }
 }
 
-#@julie_words = &clean_words(@julie_words);
-#my %julie_markov = &make_markov("Julie",@julie_words);
+#@micky_words = &clean_words(@micky_words);
+#my %micky_markov = &make_markov("Micky",@micky_words);
  
 @john_words = &clean_words(@john_words);
 #my %john_markov = &make_markov("John",@john_words);
@@ -184,16 +183,16 @@ sub parse_one_mail {
           push @john_words, (@bits,'ENDENDEND');
           &make_markov(@bits);
           #my $beg = $bits[0] . " " . $bits[1];
-          #push @{$first_john_keys{$last_julie_words}}, $beg;
+          #push @{$first_john_keys{$last_micky_words}}, $beg;
         } elsif ($from_switch == 1) {
           my @bits = split(/\s+/,$$mail_ref[$array_count+3]);
           @bits = &clean_words(@bits);
           if (@bits > 1) {
-            $last_julie_words = $bits[-2] . " " . $bits[-1];
+            $last_micky_words = $bits[-2] . " " . $bits[-1];
           } else {
-            $last_julie_words = $bits[-1];
+            $last_micky_words = $bits[-1];
           }
-          push @julie_words, (@bits,'ENDENDEND');
+          push @micky_words, (@bits,'ENDENDEND');
         }
         last;
       } else {
@@ -218,18 +217,18 @@ sub analyse_multipart {
         #$last_john_words = $bits[-2] . " " . $bits[-1];
         push @john_words, (@bits,'ENDENDEND');
         &make_markov(@bits);
-        #push @{$first_john_keys{$last_julie_words}}, $bits[0] . " " . $bits[1];
+        #push @{$first_john_keys{$last_micky_words}}, $bits[0] . " " . $bits[1];
         #print "JOHN: @bits\n";
-      } elsif ($split_line[$ii-1] =~ /Julie/) {
+      } elsif ($split_line[$ii-1] =~ /Micky/) {
         my @bits = split(/\s+/,$split_line[$ii]);
         shift @bits;
         @bits = &clean_words(@bits);
         if (@bits > 1) {
-          $last_julie_words = $bits[-2] . " " . $bits[-1];
+          $last_micky_words = $bits[-2] . " " . $bits[-1];
         } else {
-          $last_julie_words = $bits[-1];
+          $last_micky_words = $bits[-1];
         }
-        push @julie_words, (@bits,'ENDENDEND');
+        push @micky_words, (@bits,'ENDENDEND');
         #print "JULIE: @bits\n";
       } else {
         #print "NOTHING: $split_line[$ii]\n";
@@ -241,7 +240,7 @@ sub analyse_multipart {
 sub make_markov {
   my $arref = \@_;
   foreach my $ii (0..$#$arref-2) {
-    push @{$first_john_keys{$last_julie_words}}, $$arref[0] . " " . $$arref[1] if ((defined($last_julie_words)) && ($ii == 0));
+    push @{$first_john_keys{$last_micky_words}}, $$arref[0] . " " . $$arref[1] if ((defined($last_micky_words)) && ($ii == 0));
     my $key = $$arref[$ii] . " " . $$arref[$ii+1];
     push @{$markov{$key}}, $$arref[$ii+2];
   }
