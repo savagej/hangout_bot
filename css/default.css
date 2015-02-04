@@ -2,6 +2,13 @@
  * Globals
  */
 
+.loading {
+  opacity: 0.50;
+}
+.chosen {
+  color: 000;
+}
+
 .container {
   width: 520px;
   margin-top: 20px;

@@ -18,6 +18,7 @@ var run_markov = function (inputText) {
   var exist_test = 0;
   var last_word;
   if (counter === -2) {
+     console.log("warning, inputText should not be empty");
     //do nothing if empty
   } else if (counter === -1) {
     last_word = input_array[0];
@@ -49,6 +50,8 @@ var run_markov = function (inputText) {
 
   var result_arr = markov_word[first_key];
   var next_word = result_arr[Math.floor(Math.random() * result_arr.length)];
+  if (next_word === "endend")
+    return first_key;
   console.log(result_arr);
   first_key = first_key.charAt(0).toUpperCase() + first_key.slice(1);
   var result = first_key + " " + next_word;
@@ -70,8 +73,9 @@ var run_markov = function (inputText) {
   return result;
 };
 
-var main = function () {
-    $('.status-box').keypress(function(e) {
+var chatbox = function () {
+    $(document).on('keypress', '.status-box', function(e) {
+    //$('.status-box').keypress(function(e) {
       if (e.which === 13) {
         var post = $('.status-box').val();
         if (post.length > 0) {
@@ -93,4 +97,4 @@ var main = function () {
     });
 };
 
-$(document).ready(main);
+$(document).ready(chatbox);

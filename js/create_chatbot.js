@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 var reader;
 var lines;
 console.log('loaded');
@@ -88,8 +88,8 @@ function getEmailAddresses(lines) {
   $(".from_emails").append('<p> All "From" emails. Choose which ones for your chatbot');
   Object.keys(from_emails).forEach(function(key) {
     //console.log(from_emails[key]);
-    var eml = key.replace("<","&lt;");
-    eml = eml.replace(">","&gt;");
+    var eml = key.replace("<","");
+    eml = eml.replace(">","");
     $(".from_emails").append('<input type="checkbox" name="femail" value="' + key + '"> ' + eml + '&nbsp;&nbsp;&nbsp;&nbsp;- name ' + from_emails[key] + ' <br>');
   });
 
@@ -116,8 +116,9 @@ function handleToSelect(evt) {
   });
   var conf = confirm('You have chosen to make a chatbot of ' + chosen_from + ' speaking to ' + chosen_to);
   if (conf) {
-    $('.chatbot').css('opacity', '100');
     parseEmails(chosen_from,chosen_to);
+    lines = [];
+    $(".chatbot").append('<div class="form-group"><textarea class="form-control status-box" rows="2" placeholder="Press enter to send your message."></textarea></div>');
   } else {
   }
 }
@@ -175,13 +176,15 @@ function parseEmails (f,t) {
               break;
             if (multipart_switch === 0) {
               var mail_words = one_mail[jj+3].split(/\s+/); // get mail body, three lines after content-type line
-              //mail_words = clean_words(mail_words);
+              mail_words = cleanWords(mail_words);
               if (to_switch === 1) {
                 // use this message to train the speaking part of the brain
 //                for (var kk = 0; kk < mail_words.length; kk++) {
 //                  bot_words.push(mail_words[kk]);
 //                }
-                mail_words.push('ENDEND'); //mark end of message
+                if (mail_words.length < 2) 
+                  break;
+                mail_words.push('endend'); //mark end of message
                 if (last_person_words === undefined) 
                   break;
                 // first train brain how to reply to the previous message
@@ -221,6 +224,20 @@ function parseEmails (f,t) {
     }
   }
   console.log(markov_word);
+}
+
+function cleanWords (mw) {
+  var cleaned = [];
+  for (var ii = 0; ii < mw.length; ii++) {
+    var word = mw[ii];
+    word = word.replace(/\&\#39\;/g,"\'");
+    word = word.replace(/\&quot\;/g,"\"");
+    word = word.replace(/\&lt\;/g,"<");
+    word = word.replace(/\&gt\;/g,">");
+    word = word.toLowerCase();
+    cleaned.push(word);
+  }
+  return cleaned;
 }
 
 
