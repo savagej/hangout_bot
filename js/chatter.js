@@ -1,3 +1,4 @@
+"use strict";
 //var markov_word;
 //$.getJSON("json/markov.data.json", function(jsons) {
 //  //console.log(jsons); // this will show the info it in firebug console
@@ -8,6 +9,7 @@
 //  //console.log(jsons); // this will show the info it in firebug console
 //  start_of_reply = jsons;
 //});
+var maxLengthOfMessage = 20;
 
 var run_markov = function (inputText) {
   inputText = inputText.toLowerCase();
@@ -17,9 +19,9 @@ var run_markov = function (inputText) {
   console.log("counter " + counter);
   var exist_test = 0;
   var last_word;
+  // Find the possible replies to this inputText in the form of start_of_reply array
   if (counter === -2) {
      console.log("warning, inputText should not be empty");
-    //do nothing if empty
   } else if (counter === -1) {
     last_word = input_array[0];
     if (typeof start_of_reply[last_word] !== 'undefined') 
@@ -27,17 +29,19 @@ var run_markov = function (inputText) {
   } else {
     while ( (exist_test === 0) && (counter >= 0) ) {
       last_word =  input_array[counter] + " " + input_array[counter+1];
-      console.log("start_of_reply[last_word] " + start_of_reply[last_word]);
+//      console.log("start_of_reply[last_word] " + start_of_reply[last_word]);
       if (typeof start_of_reply[last_word] !== 'undefined') 
         exist_test = 1;
       counter --;
     }
   }
-  console.log("last word " + last_word);
+//  console.log("last word " + last_word);
   var first_key;
+  // If something like this inputText has been seen before, choose response,
+  // else choose the beginning of a random phrase
   if (exist_test === 1) {
     var first_key_array = start_of_reply[last_word];
-  console.log("first key array " + first_key_array);
+//    console.log("first key array " + first_key_array);
     first_key = first_key_array[Math.floor(Math.random() * first_key_array.length)];
   } else {
     console.log("random");
@@ -46,18 +50,19 @@ var run_markov = function (inputText) {
       if (Math.random() < 1/++count)
         first_key = prop;
   }
-  console.log("first key " + first_key);
+//  console.log("first key " + first_key);
 
+  // first_key gives us the first two words in the reply, use the markov
+  // brain to build the rest of the sentence
   var result_arr = markov_word[first_key];
   var next_word = result_arr[Math.floor(Math.random() * result_arr.length)];
+  first_key = first_key.charAt(0).toUpperCase() + first_key.slice(1); //capitalize 
   if (next_word === "endend")
     return first_key;
-  console.log(result_arr);
-  first_key = first_key.charAt(0).toUpperCase() + first_key.slice(1);
   var result = first_key + " " + next_word;
   var split_first_key = first_key.split(" ");
   var next_key = split_first_key[1] + " " + next_word;
-  for (var ii = 3; ii <= 20; ii++) {
+  for (var ii = 3; ii <= maxLengthOfMessage; ii++) {
     if (typeof markov_word[next_key] === 'undefined') {
       return result;
     } else {
