@@ -13,10 +13,9 @@ var maxLengthOfMessage = 20;
 
 var run_markov = function (inputText) {
   inputText = inputText.toLowerCase();
-  console.log("inputText " + inputText);
+//  console.log("inputText " + inputText);
   var input_array = inputText.split(/\s+/);
   var counter = input_array.length - 2;
-  console.log("counter " + counter);
   var exist_test = 0;
   var last_word;
   // Find the possible replies to this inputText in the form of start_of_reply array
@@ -44,7 +43,7 @@ var run_markov = function (inputText) {
 //    console.log("first key array " + first_key_array);
     first_key = first_key_array[Math.floor(Math.random() * first_key_array.length)];
   } else {
-    console.log("random");
+    console.log("Random response activated");
     var count = 0;
     for (var prop in markov_word)
       if (Math.random() < 1/++count)

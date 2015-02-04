@@ -85,23 +85,25 @@ function getEmailAddresses(lines) {
     } 
   } 
   //console.log(from_emails);
-  $(".from_emails").append('<p> All "From" emails. Choose which ones for your chatbot');
-  Object.keys(from_emails).forEach(function(key) {
+  $(".from_emails").append('<p> All "From" emails. Choose which ones for your chatbot</p>');
+  $(".to_emails").append('<p style="text-align:left"> Names</p>');
+  Object.keys(from_emails).sort().forEach(function(key) {
     //console.log(from_emails[key]);
     var eml = key.replace("<","");
     eml = eml.replace(">","");
-    $(".from_emails").append('<input type="checkbox" name="femail" value="' + key + '"> ' + eml + '&nbsp;&nbsp;&nbsp;&nbsp;- name ' + from_emails[key] + ' <br>');
+    $(".from_emails").append('<input type="checkbox" name="femail" value="' + key + '"> ' + eml + ' <br>');
+    $(".to_emails").append('<li style="text-align:left"> name ' + from_emails[key] + ' </li>');
   });
 
-  $(".to_emails").append('<p> All "To" emails. Choose which ones for your chatbot');
-  Object.keys(to_emails).forEach(function(key) {
-    //console.log(to_emails[key]);
-    var eml = key.replace("<","&lt;");
-    eml = eml.replace(">","&gt;");
-    $(".to_emails").append('<input type="checkbox" name="temail" value="' + key + '"> ' + eml + '&nbsp;&nbsp;&nbsp;&nbsp;- name ' + to_emails[key] + ' <br>');
-  });
-  $(".choose_emails").append('<input id="tos" type="button" value="Choose emails">');
-  document.getElementById('tos').addEventListener('click', handleToSelect, false);
+//  $(".to_emails").append('<p> All "To" emails. Choose which ones for your chatbot');
+//  Object.keys(to_emails).forEach(function(key) {
+//    //console.log(to_emails[key]);
+//    var eml = key.replace("<","&lt;");
+//    eml = eml.replace(">","&gt;");
+//    $(".to_emails").append('<input type="checkbox" name="temail" value="' + key + '"> ' + eml + '&nbsp;&nbsp;&nbsp;&nbsp;- name ' + to_emails[key] + ' <br>');
+//  });
+  $(".choose_emails").append('<input id="froms" type="button" value="Choose emails">');
+  document.getElementById('froms').addEventListener('click', handleToSelect, false);
 
 }
 
@@ -114,7 +116,7 @@ function handleToSelect(evt) {
   $.each($("input[name='femail']:checked"), function(){            
     chosen_from.push($(this).val());
   });
-  var conf = confirm('You have chosen to make a chatbot of ' + chosen_from + ' speaking to ' + chosen_to);
+  var conf = confirm('You have chosen to make a chatbot of you speaking to ' + chosen_from);
   if (conf) {
     parseEmails(chosen_from,chosen_to);
     lines = [];
@@ -223,7 +225,7 @@ function parseEmails (f,t) {
       one_mail.push(ln);
     }
   }
-  console.log(markov_word);
+//  console.log(markov_word);
 }
 
 function cleanWords (mw) {
