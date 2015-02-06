@@ -3,6 +3,20 @@ var reader;
 var lines;
 console.log('loaded');
 
+var botMails = [];
+var personMails = [];
+
+function bot(body,prev_message) {
+  this.body = body;
+  this.prev_message = prev_message;
+}
+
+function person(brain1,brain2,brain3) {
+  this.brain1 = brain1;
+  this.brain2 = brain2;
+  this.brain3 = brain3;
+}
+
 function abortRead() {
   reader.abort();
 }
@@ -84,24 +98,14 @@ function getEmailAddresses(lines) {
         to_emails[email] = person;
     } 
   } 
-  //console.log(from_emails);
   $(".from_emails").append('<p> All "From" emails. Choose which ones for your chatbot</p>');
   $(".to_emails").append('<p style="text-align:left"> Names</p>');
   Object.keys(from_emails).sort().forEach(function(key) {
-    //console.log(from_emails[key]);
     var eml = key.replace("<","");
     eml = eml.replace(">","");
     $(".from_emails").append('<input type="checkbox" name="femail" value="' + key + '"> ' + eml + ' <br>');
     $(".to_emails").append('<li style="text-align:left"> name ' + from_emails[key] + ' </li>');
   });
-
-//  $(".to_emails").append('<p> All "To" emails. Choose which ones for your chatbot');
-//  Object.keys(to_emails).forEach(function(key) {
-//    //console.log(to_emails[key]);
-//    var eml = key.replace("<","&lt;");
-//    eml = eml.replace(">","&gt;");
-//    $(".to_emails").append('<input type="checkbox" name="temail" value="' + key + '"> ' + eml + '&nbsp;&nbsp;&nbsp;&nbsp;- name ' + to_emails[key] + ' <br>');
-//  });
   $(".choose_emails").append('<input id="froms" type="button" value="Choose emails">');
   document.getElementById('froms').addEventListener('click', handleToSelect, false);
 
@@ -118,7 +122,7 @@ function handleToSelect(evt) {
   });
   var conf = confirm('You have chosen to make a chatbot of you speaking to ' + chosen_from);
   if (conf) {
-    parseEmails(chosen_from,chosen_to);
+    parseEmails(chosen_from);
     lines = [];
     $(".chatbot").append('<div class="form-group"><textarea class="form-control status-box" rows="2" placeholder="Press enter to send your message."></textarea></div>');
   } else {
@@ -127,11 +131,10 @@ function handleToSelect(evt) {
   var markov_word = new Object();
   var start_of_reply = new Object();
 
-function parseEmails (f,t) {
+function parseEmails (f) {
   var one_mail = [];
   var bot_words = [];
   var person_words = [];
-  var last_person_words;
   for (var ii = 0; ii < lines.length; ii ++) {
     var ln = lines[ii];
     if (ln.match(/\@xxx/)) {
@@ -143,6 +146,8 @@ function parseEmails (f,t) {
         var from_switch = 0;
         var to_switch = 0;
         var multipart_switch = 0;
+  var last_person_words;
+  var firstlast_person_words;
         for (var jj = 0; jj < one_mail.length; jj++) {
           var line2 = one_mail[jj];
           if (line2.match(/Content-Type: multipart/)) { // check if this is a multipart message
@@ -157,7 +162,7 @@ function parseEmails (f,t) {
             if (from_test !== "From:")
               continue;
             var email_address = from_line.pop();
-            for (kk in f) {
+            for (var kk in f) {
               if (email_address === f[kk]) 
                 from_switch = 1;
             }
@@ -167,7 +172,7 @@ function parseEmails (f,t) {
             if (to_test !== "To:")
               continue;
             var email_address = to_line.pop();
-            for (kk in f) {
+            for (var kk in f) {
               if (email_address === f[kk]) 
                 to_switch = 1;
             }
@@ -177,42 +182,44 @@ function parseEmails (f,t) {
             if ( (from_switch === 0) && (to_switch === 0) )
               break;
             if (multipart_switch === 0) {
-              var mail_words = one_mail[jj+3].split(/\s+/); // get mail body, three lines after content-type line
-              mail_words = cleanWords(mail_words);
+              var mail_body = one_mail[jj+3];
               if (to_switch === 1) {
                 // use this message to train the speaking part of the brain
 //                for (var kk = 0; kk < mail_words.length; kk++) {
 //                  bot_words.push(mail_words[kk]);
 //                }
-                if (mail_words.length < 2) 
-                  break;
-                mail_words.push('endend'); //mark end of message
-                if (last_person_words === undefined) 
-                  break;
-                // first train brain how to reply to the previous message
-                if (start_of_reply[last_person_words] === undefined)
-                  start_of_reply[last_person_words] = [];
-                var first_two_words = mail_words[0] + " " + mail_words[1];
-                start_of_reply[last_person_words].push(first_two_words);
+                botMails[botMails.length] = new bot(mail_body,personMails.length-1);
+                //if (mail_words.length < 2) 
+                //  break;
+                //mail_words.push('endend'); //mark end of message
+                //if (last_person_words === undefined) 
+                //  break;
+                //// first train brain how to reply to the previous message
+                //if (start_of_reply[last_person_words] === undefined)
+                //  start_of_reply[last_person_words] = [];
+                //var first_two_words = mail_words[0] + " " + mail_words[1];
+                //start_of_reply[last_person_words].push(first_two_words);
                 // 
-                for (var kk = 0; kk < mail_words.length - 2; kk++) {
-                  var two_words = mail_words[kk] + " " + mail_words[kk+1];
-                  if (markov_word[two_words] === undefined) 
-                    markov_word[two_words] = [];
-                  markov_word[two_words].push(mail_words[kk+2]);
-                }
+                //for (var kk = 0; kk < mail_words.length - 2; kk++) {
+                //  var two_words = mail_words[kk] + " " + mail_words[kk+1];
+                //  if (markov_word[two_words] === undefined) 
+                //    markov_word[two_words] = [];
+                //  markov_word[two_words].push(mail_words[kk+2]);
+                //}
               } else if (from_switch === 1) {
                 // use this message to train the listening part of the brain
                 // The beginning of the next "to" messages will be linked to the key generated from this message
                 // so that the brain knows how to respond to messages like this in the future.
+                var mail_words = mail_body.split(/\s+/); // get mail body, three lines after content-type line
+                mail_words = cleanWords(mail_words);
                 if (mail_words.length > 1) {
                   last_person_words = mail_words[mail_words.length-2] + " " + mail_words[mail_words.length-1];
+                  firstlast_person_words = mail_words[0] + " " + mail_words[mail_words.length-1];
                 } else {
                   last_person_words = mail_words[mail_words.length-1];
+                  firstlast_person_words = mail_words[mail_words.length-1];
                 }
-//                for (var kk = 0; kk < mail_words.length; kk++) {
-//                  person_words.push(mail_words[kk]);
-//                }
+                personMails[personMails.length] = new person(last_person_words,firstlast_person_words);
               }
             }
             break;
@@ -236,6 +243,7 @@ function cleanWords (mw) {
     word = word.replace(/\&quot\;/g,"\"");
     word = word.replace(/\&lt\;/g,"<");
     word = word.replace(/\&gt\;/g,">");
+    word = word.replace(/([?!.,'"])(?=\1)/g,""); // Make sure there's only one punctuation mark
     word = word.toLowerCase();
     cleaned.push(word);
   }
