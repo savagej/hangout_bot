@@ -124,6 +124,8 @@ function handleToSelect(evt) {
   if (conf) {
     parseEmails(chosen_from);
     lines = [];
+    var qual = makeChatbot(botMails,personMails);
+    console.log("quality " + qual.quality1 + " " + qual.quality2 + " " + qual.quality3);
     $(".chatbot").append('<div class="form-group"><textarea class="form-control status-box" rows="2" placeholder="Press enter to send your message."></textarea></div>');
   } else {
   }
@@ -148,6 +150,7 @@ function parseEmails (f) {
         var multipart_switch = 0;
   var last_person_words;
   var firstlast_person_words;
+  var firmidlas_person_words;
         for (var jj = 0; jj < one_mail.length; jj++) {
           var line2 = one_mail[jj];
           if (line2.match(/Content-Type: multipart/)) { // check if this is a multipart message
@@ -219,7 +222,13 @@ function parseEmails (f) {
                   last_person_words = mail_words[mail_words.length-1];
                   firstlast_person_words = mail_words[mail_words.length-1];
                 }
-                personMails[personMails.length] = new person(last_person_words,firstlast_person_words);
+                if (mail_words.length > 2) {
+                  var middle = Math.floor(mail_words.length/2);
+                  firmidlas_person_words = mail_words[0] + " " + mail_words[middle] + " " + mail_words[mail_words.length-1];
+                } else {
+                  firmidlas_person_words = firstlast_person_words;
+                }
+                personMails[personMails.length] = new person(last_person_words,firstlast_person_words,firmidlas_person_words);
               }
             }
             break;
@@ -234,6 +243,46 @@ function parseEmails (f) {
   }
 //  console.log(markov_word);
 }
+
+function makeChatbot (bm,pm) {
+  var quarter = pm.length/4;
+  var q = {
+    quality1 : [],
+    quality2 : [],
+    quality3 : []
+  }
+
+  for (var ii = 0; ii < 4; ii++) {
+    q.quality1[ii] = 0;
+    q.quality2[ii] = 0;
+    q.quality3[ii] = 0;
+    var slice = pm.slice(ii*quarter,(ii+1)*quarter);
+    for (var jj = 0; jj < pm.length; jj++) {
+      if ( (jj >=ii*quarter) && (jj <= (ii+1)*quarter) )
+        continue;
+      var found1 = 0;
+      var found2 = 0;
+      var found3 = 0;
+      for (var kk = 0; kk < slice.length; kk++ ) {
+        if (pm[jj].brain1 === slice[kk].brain1)
+          found1 = 1;
+        if (pm[jj].brain2 === slice[kk].brain2)
+          found2 = 1;
+        if (pm[jj].brain3 === slice[kk].brain3)
+          found3 = 1;
+      }
+      q.quality1[ii] += found1;
+      q.quality2[ii] += found2;
+      q.quality3[ii] += found3;
+    }
+    q.quality1[ii] /= slice.length;
+    q.quality2[ii] /= slice.length;
+    q.quality3[ii] /= slice.length;
+  }
+  return q;
+}
+
+
 
 function cleanWords (mw) {
   var cleaned = [];
