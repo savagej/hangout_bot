@@ -11,10 +11,14 @@ function bot(body,prev_message) {
   this.prev_message = prev_message;
 }
 
-function person(brain1,brain2,brain3) {
+function person(brain1,brain2,brain3,brain4,brain5,brain6,brain7) {
   this.brain1 = brain1;
   this.brain2 = brain2;
   this.brain3 = brain3;
+  this.brain4 = brain4;
+  this.brain5 = brain5;
+  this.brain6 = brain6;
+  this.brain7 = brain7;
 }
 
 function abortRead() {
@@ -125,7 +129,14 @@ function handleToSelect(evt) {
     parseEmails(chosen_from);
     lines = [];
     var qual = makeChatbot(botMails,personMails);
-    console.log("quality " + qual.quality1 + " " + qual.quality2 + " " + qual.quality3);
+    debugger;
+    console.log("quality1 " + average(qual.quality1));
+    console.log("quality2 " + average(qual.quality2));
+    console.log("quality3 " + average(qual.quality3));
+    console.log("quality4 " + average(qual.quality4));
+    console.log("quality5 " + average(qual.quality5));
+    console.log("quality6 " + average(qual.quality6));
+    console.log("quality7 " + average(qual.quality7));
     $(".chatbot").append('<div class="form-group"><textarea class="form-control status-box" rows="2" placeholder="Press enter to send your message."></textarea></div>');
   } else {
   }
@@ -148,9 +159,6 @@ function parseEmails (f) {
         var from_switch = 0;
         var to_switch = 0;
         var multipart_switch = 0;
-  var last_person_words;
-  var firstlast_person_words;
-  var firmidlas_person_words;
         for (var jj = 0; jj < one_mail.length; jj++) {
           var line2 = one_mail[jj];
           if (line2.match(/Content-Type: multipart/)) { // check if this is a multipart message
@@ -213,8 +221,18 @@ function parseEmails (f) {
                 // use this message to train the listening part of the brain
                 // The beginning of the next "to" messages will be linked to the key generated from this message
                 // so that the brain knows how to respond to messages like this in the future.
+                //
+                var last_person_words;
+                var firstlast_person_words;
+                var firmidlas_person_words;
+                var last_nopunct_words;
+                var firstlast_nopunct_words;
+                var last_nostop_words;
+                var firstlast_nostop_words;
+ 
                 var mail_words = mail_body.split(/\s+/); // get mail body, three lines after content-type line
                 mail_words = cleanWords(mail_words);
+                // basic brains
                 if (mail_words.length > 1) {
                   last_person_words = mail_words[mail_words.length-2] + " " + mail_words[mail_words.length-1];
                   firstlast_person_words = mail_words[0] + " " + mail_words[mail_words.length-1];
@@ -222,13 +240,32 @@ function parseEmails (f) {
                   last_person_words = mail_words[mail_words.length-1];
                   firstlast_person_words = mail_words[mail_words.length-1];
                 }
+                // three word brain
                 if (mail_words.length > 2) {
                   var middle = Math.floor(mail_words.length/2);
                   firmidlas_person_words = mail_words[0] + " " + mail_words[middle] + " " + mail_words[mail_words.length-1];
                 } else {
                   firmidlas_person_words = firstlast_person_words;
                 }
-                personMails[personMails.length] = new person(last_person_words,firstlast_person_words,firmidlas_person_words);
+                // no punctuation brain
+                var nopunct_words = scrubWords(mail_words);
+                if (nopunct_words.length > 1) {
+                  last_nopunct_words = nopunct_words[nopunct_words.length-2] + " " + nopunct_words[nopunct_words.length-1];
+                  firstlast_nopunct_words = nopunct_words[0] + " " + nopunct_words[nopunct_words.length-1];
+                } else {
+                  last_nopunct_words = nopunct_words[nopunct_words.length-1];
+                  firstlast_nopunct_words = nopunct_words[nopunct_words.length-1];
+                }
+                // no stopwords brain
+                 var nostop_words = rinseWords(mail_words);
+                if (nostop_words.length > 1) {
+                  last_nostop_words = nostop_words[nostop_words.length-2] + " " + nostop_words[nostop_words.length-1];
+                  firstlast_nostop_words = nostop_words[0] + " " + nostop_words[nostop_words.length-1];
+                } else {
+                  last_nostop_words = nostop_words[nostop_words.length-1];
+                  firstlast_nostop_words = nostop_words[nostop_words.length-1];
+                }               
+                personMails[personMails.length] = new person(last_person_words,firstlast_person_words,firmidlas_person_words,last_nopunct_words,firstlast_nopunct_words,last_nostop_words,firstlast_nostop_words);
               }
             }
             break;
@@ -249,13 +286,21 @@ function makeChatbot (bm,pm) {
   var q = {
     quality1 : [],
     quality2 : [],
-    quality3 : []
+    quality3 : [],
+    quality4 : [],
+    quality5 : [],
+    quality6 : [],
+    quality7 : [],
   }
 
   for (var ii = 0; ii < 4; ii++) {
     q.quality1[ii] = 0;
     q.quality2[ii] = 0;
     q.quality3[ii] = 0;
+    q.quality4[ii] = 0;
+    q.quality5[ii] = 0;
+    q.quality6[ii] = 0;
+    q.quality7[ii] = 0;
     var slice = pm.slice(ii*quarter,(ii+1)*quarter);
     for (var jj = 0; jj < pm.length; jj++) {
       if ( (jj >=ii*quarter) && (jj <= (ii+1)*quarter) )
@@ -263,6 +308,10 @@ function makeChatbot (bm,pm) {
       var found1 = 0;
       var found2 = 0;
       var found3 = 0;
+      var found4 = 0;
+      var found5 = 0;
+      var found6 = 0;
+      var found7 = 0;
       for (var kk = 0; kk < slice.length; kk++ ) {
         if (pm[jj].brain1 === slice[kk].brain1)
           found1 = 1;
@@ -270,21 +319,36 @@ function makeChatbot (bm,pm) {
           found2 = 1;
         if (pm[jj].brain3 === slice[kk].brain3)
           found3 = 1;
+        if (pm[jj].brain4 === slice[kk].brain4)
+          found4 = 1;
+        if (pm[jj].brain5 === slice[kk].brain5)
+          found5 = 1;
+        if (pm[jj].brain6 === slice[kk].brain6)
+          found6 = 1;
+        if (pm[jj].brain7 === slice[kk].brain7)
+          found7 = 1;
       }
       q.quality1[ii] += found1;
       q.quality2[ii] += found2;
       q.quality3[ii] += found3;
+      q.quality4[ii] += found4;
+      q.quality5[ii] += found5;
+      q.quality6[ii] += found6;
+      q.quality7[ii] += found7;
     }
     q.quality1[ii] /= slice.length;
     q.quality2[ii] /= slice.length;
     q.quality3[ii] /= slice.length;
+    q.quality4[ii] /= slice.length;
+    q.quality5[ii] /= slice.length;
+    q.quality6[ii] /= slice.length;
+    q.quality7[ii] /= slice.length;
   }
   return q;
 }
 
-
-
 function cleanWords (mw) {
+  // change html tags to real charachters and change to lower case
   var cleaned = [];
   for (var ii = 0; ii < mw.length; ii++) {
     var word = mw[ii];
@@ -297,6 +361,44 @@ function cleanWords (mw) {
     cleaned.push(word);
   }
   return cleaned;
+}
+function rinseWords (mw) {
+  // remove all punctutation
+  var cleaned = [];
+  for (var ii = 0; ii < mw.length; ii++) {
+    var word = mw[ii];
+    word = word.replace(/[\.,-\/#!$%\^&\*;:{}=\-_`~()]/g,""); // Remove all punctuation 
+    cleaned.push(word);
+  }
+  return cleaned;
+}
+function scrubWords (mw) {
+  // remove all stopwords
+  var cleaned = [];
+  for (var ii = 0; ii < mw.length; ii++) {
+    var word = mw[ii];
+    var is_stopword = 0;
+    for (var jj = 0; jj < stopwords.length; jj++) {
+      if (stopwords[jj] === word) 
+        is_stopword = 1;
+    }
+    if (is_stopword === 0)
+      cleaned.push(word);
+  }
+  return cleaned;
+}
+
+
+function average (arr) {
+  if (arr.length === 0) 
+    return 0;
+  var sum = 0;
+  for (var ii = 0; ii < arr.length; ii++) {
+    //sum += parseInt( arr[ii], 10 );
+    sum += arr[ii];
+  }
+  var av = sum / arr.length;
+  return av;
 }
 
 
