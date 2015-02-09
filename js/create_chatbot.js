@@ -6,9 +6,9 @@ console.log('loaded');
 var botMails = [];
 var personMails = [];
 
-function bot(body,prev_message) {
-  this.body = body;
-  this.prev_message = prev_message;
+function bot(first_two_words,prev_message_num) {
+  this.first_two_words = first_two_words;
+  this.prev_message_num = prev_message_num;
 }
 
 function person(brain1,brain2,brain3,brain4,brain5,brain6,brain7) {
@@ -128,15 +128,12 @@ function handleToSelect(evt) {
   if (conf) {
     parseEmails(chosen_from);
     lines = [];
-    var qual = makeChatbot(botMails,personMails);
-    debugger;
-    console.log("quality1 " + average(qual.quality1));
-    console.log("quality2 " + average(qual.quality2));
-    console.log("quality3 " + average(qual.quality3));
-    console.log("quality4 " + average(qual.quality4));
-    console.log("quality5 " + average(qual.quality5));
-    console.log("quality6 " + average(qual.quality6));
-    console.log("quality7 " + average(qual.quality7));
+    var qual = testQuality(personMails);
+    var endquality = new person(average(qual.quality1),average(qual.quality2),average(qual.quality3),average(qual.quality4),average(qual.quality5),average(qual.quality6),average(qual.quality7));
+    Object.keys(endquality).sort(function(a,b){return endquality[a]-endquality[b]}).forEach(function(key) {
+      console.log(key,endquality[key]);
+    });
+    bakeChatbot(botMails,personMails);
     $(".chatbot").append('<div class="form-group"><textarea class="form-control status-box" rows="2" placeholder="Press enter to send your message."></textarea></div>');
   } else {
   }
@@ -194,29 +191,31 @@ function parseEmails (f) {
               break;
             if (multipart_switch === 0) {
               var mail_body = one_mail[jj+3];
+              var mail_words = mail_body.split(/\s+/); // get mail body, three lines after content-type line
+              mail_words = cleanWords(mail_words);
               if (to_switch === 1) {
                 // use this message to train the speaking part of the brain
 //                for (var kk = 0; kk < mail_words.length; kk++) {
 //                  bot_words.push(mail_words[kk]);
 //                }
-                botMails[botMails.length] = new bot(mail_body,personMails.length-1);
-                //if (mail_words.length < 2) 
-                //  break;
-                //mail_words.push('endend'); //mark end of message
-                //if (last_person_words === undefined) 
-                //  break;
-                //// first train brain how to reply to the previous message
+                if (mail_words.length < 2) 
+                  break;
+                mail_words.push('endend'); //mark end of message
+                if (last_person_words === undefined) 
+                  break;
+                // first train brain how to reply to the previous message
                 //if (start_of_reply[last_person_words] === undefined)
                 //  start_of_reply[last_person_words] = [];
-                //var first_two_words = mail_words[0] + " " + mail_words[1];
+                var first_two_words = mail_words[0] + " " + mail_words[1];
                 //start_of_reply[last_person_words].push(first_two_words);
-                // 
-                //for (var kk = 0; kk < mail_words.length - 2; kk++) {
-                //  var two_words = mail_words[kk] + " " + mail_words[kk+1];
-                //  if (markov_word[two_words] === undefined) 
-                //    markov_word[two_words] = [];
-                //  markov_word[two_words].push(mail_words[kk+2]);
-                //}
+                botMails[botMails.length] = new bot(first_two_words,personMails.length-1);
+                 
+                for (var kk = 0; kk < mail_words.length - 2; kk++) {
+                  var two_words = mail_words[kk] + " " + mail_words[kk+1];
+                  if (markov_word[two_words] === undefined) 
+                    markov_word[two_words] = [];
+                  markov_word[two_words].push(mail_words[kk+2]);
+                }
               } else if (from_switch === 1) {
                 // use this message to train the listening part of the brain
                 // The beginning of the next "to" messages will be linked to the key generated from this message
@@ -230,8 +229,6 @@ function parseEmails (f) {
                 var last_nostop_words;
                 var firstlast_nostop_words;
  
-                var mail_words = mail_body.split(/\s+/); // get mail body, three lines after content-type line
-                mail_words = cleanWords(mail_words);
                 // basic brains
                 if (mail_words.length > 1) {
                   last_person_words = mail_words[mail_words.length-2] + " " + mail_words[mail_words.length-1];
@@ -281,7 +278,7 @@ function parseEmails (f) {
 //  console.log(markov_word);
 }
 
-function makeChatbot (bm,pm) {
+function testQuality (pm) {
   var quarter = pm.length/4;
   var q = {
     quality1 : [],
@@ -347,6 +344,20 @@ function makeChatbot (bm,pm) {
   return q;
 }
 
+function bakeChatbot (bm,pm) {
+  for (var ii = 1; ii < bm.length; ii++) {
+    var pm_number = bm[ii].prev_message_num;
+    if (pm_number === undefined) {
+      console.log(ii);
+      continue;
+    }
+    var last_person_words = pm[pm_number].brain1;
+    if (start_of_reply[last_person_words] === undefined)
+      start_of_reply[last_person_words] = [];
+    start_of_reply[last_person_words].push(bm[ii].first_two_words);
+  }
+}
+
 function cleanWords (mw) {
   // change html tags to real charachters and change to lower case
   var cleaned = [];
@@ -357,7 +368,11 @@ function cleanWords (mw) {
     word = word.replace(/\&lt\;/g,"<");
     word = word.replace(/\&gt\;/g,">");
     word = word.replace(/([?!.,'"])(?=\1)/g,""); // Make sure there's only one punctuation mark
+    word = word.replace(/<a.+<\/a>/,"#link");
+    word = word.replace(/href.+<\/a>/,"#link");
     word = word.toLowerCase();
+    word = word.replace(/=..=..=..=../g,"#emoji");
+    word = word.replace(/=c2=a0/g,"");
     cleaned.push(word);
   }
   return cleaned;
@@ -387,7 +402,6 @@ function scrubWords (mw) {
   }
   return cleaned;
 }
-
 
 function average (arr) {
   if (arr.length === 0) 
