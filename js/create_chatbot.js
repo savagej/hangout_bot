@@ -3,6 +3,13 @@ var reader;
 var lines;
 console.log('loaded');
 
+//initialize
+var markov_word = new Object();
+var start_of_reply = [];
+for (var i = 0; i < 7; i++) { 
+  start_of_reply[i] = new Object();
+}
+
 var botMails = [];
 var personMails = [];
 
@@ -10,16 +17,17 @@ function bot(first_two_words,prev_message_num) {
   this.first_two_words = first_two_words;
   this.prev_message_num = prev_message_num;
 }
+var brainQuality;
 
-function person(brain1,brain2,brain3,brain4,brain5,brain6,brain7) {
-  this.brain1 = brain1;
-  this.brain2 = brain2;
-  this.brain3 = brain3;
-  this.brain4 = brain4;
-  this.brain5 = brain5;
-  this.brain6 = brain6;
-  this.brain7 = brain7;
-}
+//function person(brain1,brain2,brain3,brain4,brain5,brain6,brain7) {
+//  this.brain1 = brain1;
+//  this.brain2 = brain2;
+//  this.brain3 = brain3;
+//  this.brain4 = brain4;
+//  this.brain5 = brain5;
+//  this.brain6 = brain6;
+//  this.brain7 = brain7;
+//}
 
 function abortRead() {
   reader.abort();
@@ -129,18 +137,18 @@ function handleToSelect(evt) {
     parseEmails(chosen_from);
     lines = [];
     var qual = testQuality(personMails);
-    var endquality = new person(average(qual.quality1),average(qual.quality2),average(qual.quality3),average(qual.quality4),average(qual.quality5),average(qual.quality6),average(qual.quality7));
-    Object.keys(endquality).sort(function(a,b){return endquality[a]-endquality[b]}).forEach(function(key) {
-      console.log(key,endquality[key]);
-    });
+    var endquality = [average(qual[0]),average(qual[1]),average(qual[2]),average(qual[3]),average(qual[4]),average(qual[5]),average(qual[6])];
+    var endq_ind = [];
+    for (var ii = 0; ii < endquality.length;ii++) {
+      endq_ind.push(ii);
+    }
+    brainQuality = endq_ind.sort(function(a,b){return endquality[a]-endquality[b]});
+    console.log("brainQuality " + brainQuality);
     bakeChatbot(botMails,personMails);
     $(".chatbot").append('<div class="form-group"><textarea class="form-control status-box" rows="2" placeholder="Press enter to send your message."></textarea></div>');
   } else {
   }
 }
-  var markov_word = new Object();
-  var start_of_reply = new Object();
-
 function parseEmails (f) {
   var one_mail = [];
   var bot_words = [];
@@ -201,8 +209,6 @@ function parseEmails (f) {
                 if (mail_words.length < 2) 
                   break;
                 mail_words.push('endend'); //mark end of message
-                if (last_person_words === undefined) 
-                  break;
                 // first train brain how to reply to the previous message
                 //if (start_of_reply[last_person_words] === undefined)
                 //  start_of_reply[last_person_words] = [];
@@ -221,48 +227,7 @@ function parseEmails (f) {
                 // The beginning of the next "to" messages will be linked to the key generated from this message
                 // so that the brain knows how to respond to messages like this in the future.
                 //
-                var last_person_words;
-                var firstlast_person_words;
-                var firmidlas_person_words;
-                var last_nopunct_words;
-                var firstlast_nopunct_words;
-                var last_nostop_words;
-                var firstlast_nostop_words;
- 
-                // basic brains
-                if (mail_words.length > 1) {
-                  last_person_words = mail_words[mail_words.length-2] + " " + mail_words[mail_words.length-1];
-                  firstlast_person_words = mail_words[0] + " " + mail_words[mail_words.length-1];
-                } else {
-                  last_person_words = mail_words[mail_words.length-1];
-                  firstlast_person_words = mail_words[mail_words.length-1];
-                }
-                // three word brain
-                if (mail_words.length > 2) {
-                  var middle = Math.floor(mail_words.length/2);
-                  firmidlas_person_words = mail_words[0] + " " + mail_words[middle] + " " + mail_words[mail_words.length-1];
-                } else {
-                  firmidlas_person_words = firstlast_person_words;
-                }
-                // no punctuation brain
-                var nopunct_words = scrubWords(mail_words);
-                if (nopunct_words.length > 1) {
-                  last_nopunct_words = nopunct_words[nopunct_words.length-2] + " " + nopunct_words[nopunct_words.length-1];
-                  firstlast_nopunct_words = nopunct_words[0] + " " + nopunct_words[nopunct_words.length-1];
-                } else {
-                  last_nopunct_words = nopunct_words[nopunct_words.length-1];
-                  firstlast_nopunct_words = nopunct_words[nopunct_words.length-1];
-                }
-                // no stopwords brain
-                 var nostop_words = rinseWords(mail_words);
-                if (nostop_words.length > 1) {
-                  last_nostop_words = nostop_words[nostop_words.length-2] + " " + nostop_words[nostop_words.length-1];
-                  firstlast_nostop_words = nostop_words[0] + " " + nostop_words[nostop_words.length-1];
-                } else {
-                  last_nostop_words = nostop_words[nostop_words.length-1];
-                  firstlast_nostop_words = nostop_words[nostop_words.length-1];
-                }               
-                personMails[personMails.length] = new person(last_person_words,firstlast_person_words,firmidlas_person_words,last_nopunct_words,firstlast_nopunct_words,last_nostop_words,firstlast_nostop_words);
+                personMails[personMails.length] = getBrains(mail_words);
               }
             }
             break;
@@ -280,66 +245,48 @@ function parseEmails (f) {
 
 function testQuality (pm) {
   var quarter = pm.length/4;
-  var q = {
-    quality1 : [],
-    quality2 : [],
-    quality3 : [],
-    quality4 : [],
-    quality5 : [],
-    quality6 : [],
-    quality7 : [],
-  }
+  var q = [ [], [], [], [], [], [], [] ];
 
   for (var ii = 0; ii < 4; ii++) {
-    q.quality1[ii] = 0;
-    q.quality2[ii] = 0;
-    q.quality3[ii] = 0;
-    q.quality4[ii] = 0;
-    q.quality5[ii] = 0;
-    q.quality6[ii] = 0;
-    q.quality7[ii] = 0;
+    for (var brn = 0; brn < 7; brn++) {
+      q[brn][ii] = 0;
+    }
     var slice = pm.slice(ii*quarter,(ii+1)*quarter);
     for (var jj = 0; jj < pm.length; jj++) {
       if ( (jj >=ii*quarter) && (jj <= (ii+1)*quarter) )
         continue;
-      var found1 = 0;
-      var found2 = 0;
-      var found3 = 0;
-      var found4 = 0;
-      var found5 = 0;
-      var found6 = 0;
-      var found7 = 0;
+      var found = [ 0, 0, 0, 0, 0, 0, 0 ];
       for (var kk = 0; kk < slice.length; kk++ ) {
-        if (pm[jj].brain1 === slice[kk].brain1)
-          found1 = 1;
-        if (pm[jj].brain2 === slice[kk].brain2)
-          found2 = 1;
-        if (pm[jj].brain3 === slice[kk].brain3)
-          found3 = 1;
-        if (pm[jj].brain4 === slice[kk].brain4)
-          found4 = 1;
-        if (pm[jj].brain5 === slice[kk].brain5)
-          found5 = 1;
-        if (pm[jj].brain6 === slice[kk].brain6)
-          found6 = 1;
-        if (pm[jj].brain7 === slice[kk].brain7)
-          found7 = 1;
+        if (pm[jj][0] === slice[kk][0])
+          found[0] = 1;
+        if (pm[jj][1] === slice[kk][1])
+          found[1] = 1;
+        if (pm[jj][2] === slice[kk][2])
+          found[2] = 1;
+        if (pm[jj][3] === slice[kk][3])
+          found[3] = 1;
+        if (pm[jj][4] === slice[kk][4])
+          found[4] = 1;
+        if (pm[jj][5] === slice[kk][5])
+          found[5] = 1;
+        if (pm[jj][6] === slice[kk][6])
+          found[6] = 1;
       }
-      q.quality1[ii] += found1;
-      q.quality2[ii] += found2;
-      q.quality3[ii] += found3;
-      q.quality4[ii] += found4;
-      q.quality5[ii] += found5;
-      q.quality6[ii] += found6;
-      q.quality7[ii] += found7;
+      q[0][ii] += found[0];
+      q[1][ii] += found[1];
+      q[2][ii] += found[2];
+      q[3][ii] += found[3];
+      q[4][ii] += found[4];
+      q[5][ii] += found[5];
+      q[6][ii] += found[6];
     }
-    q.quality1[ii] /= slice.length;
-    q.quality2[ii] /= slice.length;
-    q.quality3[ii] /= slice.length;
-    q.quality4[ii] /= slice.length;
-    q.quality5[ii] /= slice.length;
-    q.quality6[ii] /= slice.length;
-    q.quality7[ii] /= slice.length;
+    q[0][ii] /= slice.length;
+    q[1][ii] /= slice.length;
+    q[2][ii] /= slice.length;
+    q[3][ii] /= slice.length;
+    q[4][ii] /= slice.length;
+    q[5][ii] /= slice.length;
+    q[6][ii] /= slice.length;
   }
   return q;
 }
@@ -351,10 +298,12 @@ function bakeChatbot (bm,pm) {
       console.log(ii);
       continue;
     }
-    var last_person_words = pm[pm_number].brain1;
-    if (start_of_reply[last_person_words] === undefined)
-      start_of_reply[last_person_words] = [];
-    start_of_reply[last_person_words].push(bm[ii].first_two_words);
+    for (var j = 0; j < 7; j ++) {
+      var last_person_words = pm[pm_number][j];
+      if (start_of_reply[j][last_person_words] === undefined)
+        start_of_reply[j][last_person_words] = [];
+      start_of_reply[j][last_person_words].push(bm[ii].first_two_words);
+    }
   }
 }
 
@@ -413,6 +362,50 @@ function average (arr) {
   }
   var av = sum / arr.length;
   return av;
+}
+
+function getBrains(wrds) {
+  var last_person_words;
+  var firstlast_person_words;
+  var firmidlas_person_words;
+  var last_nopunct_words;
+  var firstlast_nopunct_words;
+  var last_nostop_words;
+  var firstlast_nostop_words;
+  // basic brains
+  if (wrds.length > 1) {
+    last_person_words = wrds[wrds.length-2] + " " + wrds[wrds.length-1];
+    firstlast_person_words = wrds[0] + " " + wrds[wrds.length-1];
+  } else {
+    last_person_words = wrds[wrds.length-1];
+    firstlast_person_words = wrds[wrds.length-1];
+  }
+  // three word brain
+  if (wrds.length > 2) {
+    var middle = Math.floor(wrds.length/2);
+    firmidlas_person_words = wrds[0] + " " + wrds[middle] + " " + wrds[wrds.length-1];
+  } else {
+    firmidlas_person_words = firstlast_person_words;
+  }
+  // no punctuation brain
+  var nopunct_words = scrubWords(wrds);
+  if (nopunct_words.length > 1) {
+    last_nopunct_words = nopunct_words[nopunct_words.length-2] + " " + nopunct_words[nopunct_words.length-1];
+    firstlast_nopunct_words = nopunct_words[0] + " " + nopunct_words[nopunct_words.length-1];
+  } else {
+    last_nopunct_words = nopunct_words[nopunct_words.length-1];
+    firstlast_nopunct_words = nopunct_words[nopunct_words.length-1];
+  }
+  // no stopwords brain
+  var nostop_words = rinseWords(wrds);
+  if (nostop_words.length > 1) {
+    last_nostop_words = nostop_words[nostop_words.length-2] + " " + nostop_words[nostop_words.length-1];
+    firstlast_nostop_words = nostop_words[0] + " " + nostop_words[nostop_words.length-1];
+  } else {
+    last_nostop_words = nostop_words[nostop_words.length-1];
+    firstlast_nostop_words = nostop_words[nostop_words.length-1];
+  } 
+  return [last_person_words,firstlast_person_words,firmidlas_person_words,last_nopunct_words,firstlast_nopunct_words,last_nostop_words,firstlast_nostop_words];
 }
 
 

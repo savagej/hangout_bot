@@ -17,21 +17,24 @@ var run_markov = function (inputText) {
   var input_array = inputText.split(/\s+/);
   var counter = input_array.length - 2;
   var exist_test = 0;
-  var last_word;
+  var information = getBrains(input_array);
+  var first_key_array = [];
   // Find the possible replies to this inputText in the form of start_of_reply array
   if (counter === -2) {
      console.log("warning, inputText should not be empty");
-  } else if (counter === -1) {
-    last_word = input_array[0];
-    if (typeof start_of_reply[last_word] !== 'undefined') 
-      exist_test = 1;
+  //} else if (counter === -1) {
+  //  last_word = input_array[0];
+  //  if (typeof start_of_reply[last_word] !== 'undefined') 
+  //    exist_test = 1;
   } else {
-    while ( (exist_test === 0) && (counter >= 0) ) {
-      last_word =  input_array[counter] + " " + input_array[counter+1];
-//      console.log("start_of_reply[last_word] " + start_of_reply[last_word]);
-      if (typeof start_of_reply[last_word] !== 'undefined') 
+    for (var ii = 0; ii < information.length; ii++) {
+      var ind = brainQuality[ii];
+      if (start_of_reply[ind][information[ind]] !== undefined) {
         exist_test = 1;
-      counter --;
+        first_key_array = start_of_reply[ind][information[ind]];
+        console.log("Brain number " + ind + " used, " + ii + "th best one");
+        break;
+      }
     }
   }
 //  console.log("last word " + last_word);
@@ -39,15 +42,16 @@ var run_markov = function (inputText) {
   // If something like this inputText has been seen before, choose response,
   // else choose the beginning of a random phrase
   if (exist_test === 1) {
-    var first_key_array = start_of_reply[last_word];
+    //var first_key_array = start_of_reply[last_word];
 //    console.log("first key array " + first_key_array);
     first_key = first_key_array[Math.floor(Math.random() * first_key_array.length)];
   } else {
     console.log("Random response activated");
     var count = 0;
-    for (var prop in markov_word)
+    for (var prop in start_of_reply[0])
       if (Math.random() < 1/++count)
-        first_key = prop;
+        first_key_array = start_of_reply[0][prop];
+    first_key = first_key_array[Math.floor(Math.random() * first_key_array.length)];
   }
 //  console.log("first key " + first_key);
 
