@@ -1,7 +1,6 @@
 "use strict";
 var reader;
 var lines;
-console.log('loaded');
 
 //initialize
 var markov_word = new Object();
@@ -18,16 +17,6 @@ function bot(first_two_words,prev_message_num) {
   this.prev_message_num = prev_message_num;
 }
 var brainQuality;
-
-//function person(brain1,brain2,brain3,brain4,brain5,brain6,brain7) {
-//  this.brain1 = brain1;
-//  this.brain2 = brain2;
-//  this.brain3 = brain3;
-//  this.brain4 = brain4;
-//  this.brain5 = brain5;
-//  this.brain6 = brain6;
-//  this.brain7 = brain7;
-//}
 
 function abortRead() {
   reader.abort();
@@ -145,6 +134,8 @@ function handleToSelect(evt) {
     brainQuality = endq_ind.sort(function(a,b){return endquality[a]-endquality[b]});
     console.log("brainQuality " + brainQuality);
     bakeChatbot(botMails,personMails);
+    botMails = [];
+    personMails = [];
     $(".chatbot").append('<div class="form-group"><textarea class="form-control status-box" rows="2" placeholder="Press enter to send your message."></textarea></div>');
   } else {
   }
@@ -209,13 +200,12 @@ function parseEmails (f) {
                 if (mail_words.length < 2) 
                   break;
                 mail_words.push('endend'); //mark end of message
-                // first train brain how to reply to the previous message
-                //if (start_of_reply[last_person_words] === undefined)
-                //  start_of_reply[last_person_words] = [];
+                // Hold on two first two words, as they'll be used to start messages for the chatbot
+                // link these first two words to previous message from the person using the bot object
                 var first_two_words = mail_words[0] + " " + mail_words[1];
-                //start_of_reply[last_person_words].push(first_two_words);
                 botMails[botMails.length] = new bot(first_two_words,personMails.length-1);
-                 
+
+                // Train the markov chain so the bot can speak. 
                 for (var kk = 0; kk < mail_words.length - 2; kk++) {
                   var two_words = mail_words[kk] + " " + mail_words[kk+1];
                   if (markov_word[two_words] === undefined) 
@@ -244,50 +234,29 @@ function parseEmails (f) {
 }
 
 function testQuality (pm) {
-  var quarter = pm.length/4;
+  var quarter = parseInt(pm.length/4);
   var q = [ [], [], [], [], [], [], [] ];
 
   for (var ii = 0; ii < 4; ii++) {
-    for (var brn = 0; brn < 7; brn++) {
+    for (var brn = 0; brn < 7; brn++)
       q[brn][ii] = 0;
-    }
-    var slice = pm.slice(ii*quarter,(ii+1)*quarter);
-    for (var jj = 0; jj < pm.length; jj++) {
-      if ( (jj >=ii*quarter) && (jj <= (ii+1)*quarter) )
-        continue;
-      var found = [ 0, 0, 0, 0, 0, 0, 0 ];
-      for (var kk = 0; kk < slice.length; kk++ ) {
-        if (pm[jj][0] === slice[kk][0])
-          found[0] = 1;
-        if (pm[jj][1] === slice[kk][1])
-          found[1] = 1;
-        if (pm[jj][2] === slice[kk][2])
-          found[2] = 1;
-        if (pm[jj][3] === slice[kk][3])
-          found[3] = 1;
-        if (pm[jj][4] === slice[kk][4])
-          found[4] = 1;
-        if (pm[jj][5] === slice[kk][5])
-          found[5] = 1;
-        if (pm[jj][6] === slice[kk][6])
-          found[6] = 1;
+    for (var kk = ii*quarter; kk < (ii+1)*quarter; kk++ ) {
+      var thisMail = pm[kk];
+      for (var brn = 0; brn < 7; brn++) {
+        var found = 0;
+        for (var jj = 0; jj < pm.length; jj++) {
+          if ( (jj >=ii*quarter) && (jj < (ii+1)*quarter) )
+            continue;
+          if (thisMail[brn] === pm[jj][brn])
+            found = 1;
+        }
+        q[brn][ii] += found;
       }
-      q[0][ii] += found[0];
-      q[1][ii] += found[1];
-      q[2][ii] += found[2];
-      q[3][ii] += found[3];
-      q[4][ii] += found[4];
-      q[5][ii] += found[5];
-      q[6][ii] += found[6];
     }
-    q[0][ii] /= slice.length;
-    q[1][ii] /= slice.length;
-    q[2][ii] /= slice.length;
-    q[3][ii] /= slice.length;
-    q[4][ii] /= slice.length;
-    q[5][ii] /= slice.length;
-    q[6][ii] /= slice.length;
+    for (var brn = 0; brn < 7; brn++)
+      q[brn][ii] /= quarter;
   }
+  console.log(q);
   return q;
 }
 
