@@ -9,14 +9,12 @@ for (var i = 0; i < 7; i++) {
   start_of_reply[i] = new Object();
 }
 
-var botMails = [];
-var personMails = [];
+var brainQuality;
 
 function bot(first_two_words,prev_message_num) {
   this.first_two_words = first_two_words;
   this.prev_message_num = prev_message_num;
 }
-var brainQuality;
 
 function abortRead() {
   reader.abort();
@@ -70,11 +68,13 @@ function handleFileSelect(evt) {
     $('.progress-bar').css('width', '100%').attr('aria-valuenow', 100);
     $('.progress-bar').append("DONE!");
     setTimeout("$('.progress-bar').removeClass('loading');", 2000);
+    setTimeout("$('.step1').remove(); $('h1').text('Choose the email of the person');", 3000);
   }
 
-  // Read in the image file as a binary string.
+  // Read in the image file as text lines.
   reader.readAsText(evt.target.files[0]);
 }
+
 function getEmailAddresses(lines) {
   var from_emails = new Object();
   var to_emails = new Object();
@@ -108,42 +108,47 @@ function getEmailAddresses(lines) {
     $(".to_emails").append('<li style="text-align:left"> name ' + from_emails[key] + ' </li>');
   });
   $(".choose_emails").append('<input id="froms" type="button" value="Choose emails">');
-  document.getElementById('froms').addEventListener('click', handleToSelect, false);
+  document.getElementById('froms').addEventListener('click', handleFromSelect, false);
 
 }
 
-function handleToSelect(evt) {
+function handleFromSelect(evt) {
   var chosen_from = [];
-  var chosen_to = [];
-  $.each($("input[name='temail']:checked"), function(){            
-    chosen_to.push($(this).val());
-  });
   $.each($("input[name='femail']:checked"), function(){            
     chosen_from.push($(this).val());
   });
   var conf = confirm('You have chosen to make a chatbot of you speaking to ' + chosen_from);
   if (conf) {
-    parseEmails(chosen_from);
-    lines = [];
-    var qual = testQuality(personMails);
-    var endquality = [average(qual[0]),average(qual[1]),average(qual[2]),average(qual[3]),average(qual[4]),average(qual[5]),average(qual[6])];
-    var endq_ind = [];
-    for (var ii = 0; ii < endquality.length;ii++) {
-      endq_ind.push(ii);
-    }
-    brainQuality = endq_ind.sort(function(a,b){return endquality[a]-endquality[b]});
-    console.log("brainQuality " + brainQuality);
-    bakeChatbot(botMails,personMails);
-    botMails = [];
-    personMails = [];
-    $(".chatbot").append('<div class="form-group"><textarea class="form-control status-box" rows="2" placeholder="Press enter to send your message."></textarea></div>');
+    setTimeout("$('.step2').remove(); $('h1').text('Your Chatbot is being synthesized!!!');", 200);
+    setTimeout(function () {readNcreateChatbot(chosen_from);},2000);
+    setTimeout("$('h1').text('');", 4000);
   } else {
   }
 }
+
+function readNcreateChatbot (chosen_email_addresses) {
+  var mail_info = parseEmails(chosen_email_addresses);
+  lines = [];
+  var qual = testQuality(mail_info.persons);
+  var endquality = [average(qual[0]),average(qual[1]),average(qual[2]),average(qual[3]),average(qual[4]),average(qual[5]),average(qual[6])];
+  var endq_ind = [];
+  for (var ii = 0; ii < endquality.length;ii++) {
+    endq_ind.push(ii);
+  }
+  brainQuality = endq_ind.sort(function(a,b){return endquality[a]-endquality[b]});
+  console.log("brainQuality " + brainQuality);
+  bakeChatbot(mail_info.bots,mail_info.persons);
+  $(".chatbot").append('<div class="form-group"><textarea class="form-control status-box" rows="2" placeholder="Press enter to send your message."></textarea></div>'); 
+}
+
 function parseEmails (f) {
   var one_mail = [];
   var bot_words = [];
   var person_words = [];
+  var mail_objects = {
+    bots: [],
+    persons: []
+  };
   for (var ii = 0; ii < lines.length; ii ++) {
     var ln = lines[ii];
     if (ln.match(/\@xxx/)) {
@@ -203,7 +208,7 @@ function parseEmails (f) {
                 // Hold on two first two words, as they'll be used to start messages for the chatbot
                 // link these first two words to previous message from the person using the bot object
                 var first_two_words = mail_words[0] + " " + mail_words[1];
-                botMails[botMails.length] = new bot(first_two_words,personMails.length-1);
+                mail_objects.bots[mail_objects.bots.length] = new bot(first_two_words,mail_objects.persons.length-1);
 
                 // Train the markov chain so the bot can speak. 
                 for (var kk = 0; kk < mail_words.length - 2; kk++) {
@@ -217,7 +222,7 @@ function parseEmails (f) {
                 // The beginning of the next "to" messages will be linked to the key generated from this message
                 // so that the brain knows how to respond to messages like this in the future.
                 //
-                personMails[personMails.length] = getBrains(mail_words);
+                mail_objects.persons[mail_objects.persons.length] = getBrains(mail_words);
               }
             }
             break;
@@ -231,6 +236,7 @@ function parseEmails (f) {
     }
   }
 //  console.log(markov_word);
+  return mail_objects;
 }
 
 function testQuality (pm) {
