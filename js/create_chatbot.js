@@ -4,11 +4,11 @@ var lines;
 var textFile = null;
 
 //initialize
-var object = {
-  markov_word : new Object(),
-  start_of_reply : [],
-  brainQuality : []
-}
+//var object = {
+//  markov_word : new Object(),
+//  start_of_reply : [],
+//  brainQuality : []
+//}
 for (var i = 0; i < 7; i++) { 
   object.start_of_reply[i] = new Object();
 }
@@ -86,8 +86,8 @@ function handleFileSelect(evt) {
   reader.onloadend = function(e) {
     $('.progress-bar').css('width', '100%').attr('aria-valuenow', 100);
     $('.progress-bar').append("DONE!");
-    setTimeout("$('.progress-bar').removeClass('loading');", 2000);
-    setTimeout("$('.step1').remove(); $('h1').text('Choose the email of the person');", 3000);
+    setTimeout("$('.progress-bar').removeClass('loading');", 400);
+    setTimeout("$('.step1').remove(); $('h1').text('Choose the email of the person');", 600);
   }
 
   // Read in the image file as text lines.
@@ -139,7 +139,7 @@ function handleFromSelect(evt) {
   var conf = confirm('You have chosen to make a chatbot of you speaking to ' + chosen_from);
   if (conf) {
     setTimeout("$('.step2').remove(); $('h1').text('Your Chatbot is being synthesized!!!');", 200);
-    setTimeout(function () {readNcreateChatbot(chosen_from);},2000);
+    setTimeout(function () {readNcreateChatbot(chosen_from);},300);
     setTimeout("$('h1').text('');", 4000);
   } else {
   }
@@ -156,20 +156,15 @@ function readNcreateChatbot (chosen_email_addresses) {
   object.brainQuality = endq_ind.sort(function(a,b){return endquality[a]-endquality[b]});
   console.log("brainQuality " + object.brainQuality);
   bakeChatbot(mail_info.bots,mail_info.persons);
-  $(".chatbot").append('<div class="form-group"><textarea class="form-control status-box" rows="2" placeholder="Press enter to send your message."></textarea></div>'); 
-  $(".chatbot").append('<input id="createlink" type="button" value="download file">');
+  $(".download").append('<input id="createlink" type="button" value="Download chatbot brains">');
 
  document.getElementById('createlink').addEventListener('click', function (evt) {
-    debugger;
     var json_url = makeTextFile(object);
     if (json_url !== undefined) {
-      $(".chatbot").append('<a download="object.json" id="downloadlink" href="' + json_url + '">object.json</a>'); 
-      //var link = $("#downloadlink");
-      //link.attr("href", makeTextFile(object));
+      $(".download").append('<a download="object.json" id="downloadlink" href="' + json_url + '">object.json</a>'); 
     }
-    //link.css("display","block");
-    //link.style.display = 'block';
   }, false);
+  $(".chatbot").append('<div class="form-group"><textarea class="form-control status-box" rows="2" placeholder="Press enter to send your message."></textarea></div>'); 
 }
 
 function parseEmails (f) {
