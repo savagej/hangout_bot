@@ -28,10 +28,10 @@ var run_markov = function (inputText) {
   //    exist_test = 1;
   } else {
     for (var ii = 0; ii < information.length; ii++) {
-      var ind = brainQuality[ii];
-      if (start_of_reply[ind][information[ind]] !== undefined) {
+      var ind = object.brainQuality[ii];
+      if (object.start_of_reply[ind][information[ind]] !== undefined) {
         exist_test = 1;
-        first_key_array = start_of_reply[ind][information[ind]];
+        first_key_array = object.start_of_reply[ind][information[ind]];
         console.log("Brain number " + ind + " used, " + ii + "th best one");
         break;
       }
@@ -48,16 +48,16 @@ var run_markov = function (inputText) {
   } else {
     console.log("Random response activated");
     var count = 0;
-    for (var prop in start_of_reply[0])
+    for (var prop in object.start_of_reply[0])
       if (Math.random() < 1/++count)
-        first_key_array = start_of_reply[0][prop];
+        first_key_array = object.start_of_reply[0][prop];
     first_key = first_key_array[Math.floor(Math.random() * first_key_array.length)];
   }
 //  console.log("first key " + first_key);
 
   // first_key gives us the first two words in the reply, use the markov
   // brain to build the rest of the sentence
-  var result_arr = markov_word[first_key];
+  var result_arr = object.markov_word[first_key];
   var next_word = result_arr[Math.floor(Math.random() * result_arr.length)];
   first_key = first_key.charAt(0).toUpperCase() + first_key.slice(1); //capitalize 
   if (next_word === "endend")
@@ -66,10 +66,10 @@ var run_markov = function (inputText) {
   var split_first_key = first_key.split(" ");
   var next_key = split_first_key[1] + " " + next_word;
   for (var ii = 3; ii <= maxLengthOfMessage; ii++) {
-    if (typeof markov_word[next_key] === 'undefined') {
+    if (typeof object.markov_word[next_key] === 'undefined') {
       return result;
     } else {
-      var next_words = markov_word[next_key];
+      var next_words = object.markov_word[next_key];
       var next_word = next_words[Math.floor(Math.random() * next_words.length)];
       if (next_word === "endend")
         return result;

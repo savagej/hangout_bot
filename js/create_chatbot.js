@@ -1,20 +1,39 @@
 "use strict";
 var reader;
 var lines;
+var textFile = null;
 
 //initialize
-var markov_word = new Object();
-var start_of_reply = [];
+var object = {
+  markov_word : new Object(),
+  start_of_reply : [],
+  brainQuality : []
+}
 for (var i = 0; i < 7; i++) { 
-  start_of_reply[i] = new Object();
+  object.start_of_reply[i] = new Object();
 }
 
-var brainQuality;
 
 function bot(first_two_words,prev_message_num) {
   this.first_two_words = first_two_words;
   this.prev_message_num = prev_message_num;
 }
+
+function makeTextFile(text) {
+  var textjson = JSON.stringify(text);
+  var data = new Blob([textjson], {type: 'text/plain'});
+
+  // If we are replacing a previously generated file we need to
+  // manually revoke the object URL to avoid memory leaks.
+  if (textFile !== null) {
+    window.URL.revokeObjectURL(textFile);
+  }
+
+  textFile = window.URL.createObjectURL(data);
+
+  // returns a URL you can use as a href
+  return textFile;
+};
 
 function abortRead() {
   reader.abort();
@@ -120,43 +139,11 @@ function handleFromSelect(evt) {
   var conf = confirm('You have chosen to make a chatbot of you speaking to ' + chosen_from);
   if (conf) {
     setTimeout("$('.step2').remove(); $('h1').text('Your Chatbot is being synthesized!!!');", 200);
-  d3.layout.cloud().size([300, 300])
-      .words([
-        "Hello", "world", "normally", "you", "want", "more", "words",
-        "than", "this"].map(function(d) {
-        return {text: d, size: 10 + Math.random() * 90};
-      }))
-      .padding(5)
-      .rotate(function() { return ~~(Math.random() * 2) * 90; })
-      .font("Impact")
-      .fontSize(function(d) { return d.size; })
-      .on("end", draw)
-      .start();
-
     setTimeout(function () {readNcreateChatbot(chosen_from);},2000);
     setTimeout("$('h1').text('');", 4000);
   } else {
   }
 }
-  var fill = d3.scale.category20();
-  function draw(words) {
-    d3.select("body").append("svg")
-        .attr("width", 300)
-        .attr("height", 300)
-      .append("g")
-        .attr("transform", "translate(150,150)")
-      .selectAll("text")
-        .data(words)
-      .enter().append("text")
-        .style("font-size", function(d) { return d.size + "px"; })
-        .style("font-family", "Impact")
-        .style("fill", function(d, i) { return fill(i); })
-        .attr("text-anchor", "middle")
-        .attr("transform", function(d) {
-          return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
-        })
-        .text(function(d) { return d.text; });
-  }
 function readNcreateChatbot (chosen_email_addresses) {
   var mail_info = parseEmails(chosen_email_addresses);
   lines = [];
@@ -166,10 +153,23 @@ function readNcreateChatbot (chosen_email_addresses) {
   for (var ii = 0; ii < endquality.length;ii++) {
     endq_ind.push(ii);
   }
-  brainQuality = endq_ind.sort(function(a,b){return endquality[a]-endquality[b]});
-  console.log("brainQuality " + brainQuality);
+  object.brainQuality = endq_ind.sort(function(a,b){return endquality[a]-endquality[b]});
+  console.log("brainQuality " + object.brainQuality);
   bakeChatbot(mail_info.bots,mail_info.persons);
   $(".chatbot").append('<div class="form-group"><textarea class="form-control status-box" rows="2" placeholder="Press enter to send your message."></textarea></div>'); 
+  $(".chatbot").append('<input id="createlink" type="button" value="download file">');
+
+ document.getElementById('createlink').addEventListener('click', function (evt) {
+    debugger;
+    var json_url = makeTextFile(object);
+    if (json_url !== undefined) {
+      $(".chatbot").append('<a download="object.json" id="downloadlink" href="' + json_url + '">object.json</a>'); 
+      //var link = $("#downloadlink");
+      //link.attr("href", makeTextFile(object));
+    }
+    //link.css("display","block");
+    //link.style.display = 'block';
+  }, false);
 }
 
 function parseEmails (f) {
@@ -244,9 +244,9 @@ function parseEmails (f) {
                 // Train the markov chain so the bot can speak. 
                 for (var kk = 0; kk < mail_words.length - 2; kk++) {
                   var two_words = mail_words[kk] + " " + mail_words[kk+1];
-                  if (markov_word[two_words] === undefined) 
-                    markov_word[two_words] = [];
-                  markov_word[two_words].push(mail_words[kk+2]);
+                  if (object.markov_word[two_words] === undefined) 
+                    object.markov_word[two_words] = [];
+                  object.markov_word[two_words].push(mail_words[kk+2]);
                 }
               } else if (from_switch === 1) {
                 // use this message to train the listening part of the brain
@@ -266,7 +266,7 @@ function parseEmails (f) {
       one_mail.push(ln);
     }
   }
-//  console.log(markov_word);
+//  console.log(object.markov_word);
   return mail_objects;
 }
 
@@ -306,9 +306,9 @@ function bakeChatbot (bm,pm) {
     }
     for (var j = 0; j < 7; j ++) {
       var last_person_words = pm[pm_number][j];
-      if (start_of_reply[j][last_person_words] === undefined)
-        start_of_reply[j][last_person_words] = [];
-      start_of_reply[j][last_person_words].push(bm[ii].first_two_words);
+      if (object.start_of_reply[j][last_person_words] === undefined)
+        object.start_of_reply[j][last_person_words] = [];
+      object.start_of_reply[j][last_person_words].push(bm[ii].first_two_words);
     }
   }
 }
