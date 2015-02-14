@@ -92,7 +92,7 @@ function handleFileSelect(evt) {
     $('.progress-bar').css('width', '100%').attr('aria-valuenow', 100);
     $('.progress-bar').append("DONE!");
     setTimeout("$('.progress-bar').removeClass('loading');", 400);
-    setTimeout("$('.step1').remove(); $('h1').text('Choose the email of the person');", 600);
+    setTimeout("$('.step1').remove(); $('h1').text('Choose which conversation you want to use to train your bot.');", 600);
   }
 
   // Read in the file as text lines.
@@ -461,7 +461,7 @@ function getConversations(jsn) {
   }
   var sort_ind = ind.sort(function(a,b){return num_messages[b]-num_messages[a]});
 
-  $(".from_emails").append('<p> All conversations. Choose which ones for your chatbot</p>');
+  $(".from_emails").append('<p> Conversations with more messages will work better.</p>');
   //$(".to_emails").append('<p style="text-align:left"> Names</p>');
   for (var ii = 0; ii < names.length;ii++) {
     var xx = sort_ind[ii];
@@ -495,7 +495,7 @@ function handleConvoSelect(gs,pps,jsn) {
     //$(".to_emails").append('<li style="text-align:left"> name ' + from_emails[key] + ' </li>');
   }
   $(".to_emails").append('<input id="who" type="button" value="Choose a person">');
-  setTimeout("$('.step2').remove(); $('h1').text('Now choose who will be the bot.');", 200);
+  setTimeout("$('.step2').remove(); $('h1').text('Now choose who the bot will speak like.');", 200);
   var final_gaias = Object.keys(chosen_gaias);
   document.getElementById('who').addEventListener('click', function () {handlePersonSelect(final_gaias,pps,chosen_convo,jsn)}, false);
 }
