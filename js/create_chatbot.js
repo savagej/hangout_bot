@@ -556,9 +556,12 @@ function parseJson (chosen_you,chosen_convo,jsn) {
   };
 
   var conversations = jsn.conversation_state;
-  for (var xx = 0; xx < conversations.length;xx++) {
-    if (xx !== chosen_convo[0]) 
-      continue;
+  //for (var xx = 0; xx < conversations.length;xx++) {
+  //  if (xx !== chosen_convo[0]) 
+  //    continue;
+  //debugger;
+  for (var ii = 0; ii < chosen_convo.length;ii++) {
+    var xx = chosen_convo[ii];
     var chat_data = conversations[xx].conversation_state.event;
 
     for (var yy = 0; yy < chat_data.length; yy++) {
