@@ -3,12 +3,15 @@ var reader;
 var lines;
 var textFile = null;
 
+var convos;
+
 //initialize
-//var object = {
-//  markov_word : new Object(),
-//  start_of_reply : [],
-//  brainQuality : []
-//}
+var object = {
+  markov_word : new Object(),
+  start_of_reply : [],
+  brainQuality : []
+}
+var my_object;
 for (var i = 0; i < 7; i++) { 
   object.start_of_reply[i] = new Object();
 }
@@ -66,10 +69,7 @@ function updateProgress(evt) {
 }
 
 function handleFileSelect(evt) {
-  // Reset progress indicator on new file selection.
-  //progress.style.width = '0%';
-  //progress.textContent = '0%';
-
+  var file_to_read = evt.target.files[0];
   reader = new FileReader();
   reader.onerror = errorHandler;
   reader.onprogress = updateProgress;
@@ -80,8 +80,15 @@ function handleFileSelect(evt) {
     $('.progress-bar').addClass('loading');
   };
   reader.onload = function(e) {
-    lines = this.result.split('\n');
-    getEmailAddresses(lines);
+    if (file_to_read.name === 'Chat.mbox') {
+      lines = this.result.split('\n');
+      getEmailAddresses(lines);
+    } else if (file_to_read.name === 'Hangouts.json') {
+      var file_object = JSON.parse(this.result);
+      console.log(file_object);
+      convos = getConversations(file_object);
+      console.log(convos);
+    }
   }
   reader.onloadend = function(e) {
     $('.progress-bar').css('width', '100%').attr('aria-valuenow', 100);
@@ -90,8 +97,14 @@ function handleFileSelect(evt) {
     setTimeout("$('.step1').remove(); $('h1').text('Choose the email of the person');", 600);
   }
 
-  // Read in the image file as text lines.
-  reader.readAsText(evt.target.files[0]);
+  // Read in the file as text lines.
+  if (file_to_read.name === 'Chat.mbox') {
+    reader.readAsText(file_to_read);
+  } else if (file_to_read.name === 'Hangouts.json') {
+    reader.readAsText(file_to_read);
+  } else {
+    alert("File must be Chat.mbox or Hangouts.json not " + file_to_read.name);
+  }
 }
 
 function getEmailAddresses(lines) {
@@ -408,6 +421,195 @@ function getBrains(wrds) {
   } 
   return [last_person_words,firstlast_person_words,firmidlas_person_words,last_nopunct_words,firstlast_nopunct_words,last_nostop_words,firstlast_nostop_words];
 }
+
+function getConversations(jsn) {
+  var names = [];
+  var gaias = [];
+  var num_messages = [];
+  var peeps = new Object;
+  var conversations = jsn.conversation_state;
+  for (var xx = 0; xx < conversations.length;xx++) {
+    //console.log(conversations[xx]);
+    var chat_people = conversations[xx].conversation_state.conversation.participant_data;
+//    console.log("Converstation " + xx);
+    for (var pp = 0; pp < chat_people.length;pp++ ) {
+      var gaia = chat_people[pp].id.gaia_id;
+      if (chat_people[pp].fallback_name !== undefined) {
+//        console.log(chat_people[pp].fallback_name);
+        peeps[gaia] = chat_people[pp].fallback_name;
+      } 
+    }
+  }
+  for (var xx = 0; xx < conversations.length;xx++) {
+    var chat_data = conversations[xx].conversation_state.event;
+    var chat_people = conversations[xx].conversation_state.conversation.participant_data;
+    console.log("Conversation " + xx);
+    names[xx] = [];
+    gaias[xx] = [];
+    num_messages[xx] = chat_data.length;
+    for (var pp = 0; pp < chat_people.length;pp++ ) {
+      var gaia = chat_people[pp].id.gaia_id;
+      gaias[xx].push(gaia);
+      if (peeps[gaia] !== undefined) {
+        names[xx].push(peeps[gaia]);
+      } else {
+        names[xx].push("UNDEFINED");
+      }
+    }
+  }
+
+  $(".from_emails").append('<p> All conversations. Choose which ones for your chatbot</p>');
+  //$(".to_emails").append('<p style="text-align:left"> Names</p>');
+  for (var xx = 0; xx < names.length;xx++) {
+    var addresses = names[xx].join(" ");
+    $(".from_emails").append('<input type="checkbox" name="femail" value="' + xx + '"> ' + addresses + ' - total messages: ' + num_messages[xx] + '<br>');
+    //$(".to_emails").append('<li style="text-align:left"> name ' + from_emails[key] + ' </li>');
+  }
+  $(".choose_emails").append('<input id="froms" type="button" value="Choose conversations">');
+  document.getElementById('froms').addEventListener('click', function () {handleConvoSelect(gaias,peeps,jsn)}, false);
+
+  //return convo;
+}
+
+function handleConvoSelect(gs,pps,jsn) {
+  var chosen_convo = [];
+  $.each($("input[name='femail']:checked"), function(){
+    var convo_id = $(this).val();
+    convo_id = Number(convo_id);
+    chosen_convo.push(convo_id);
+  });
+  var chosen_gaias = new Object;
+  $(".to_emails").append('<p style="text-align:left"> Names for your bot</p>');
+  for (var xx = 0; xx < chosen_convo.length;xx++) {
+    var gaias_inthis = gs[chosen_convo[xx]];
+    for (var yy = 0; yy < gaias_inthis.length;yy++) {
+      if (chosen_gaias[gaias_inthis[yy]] !== 1) {
+        chosen_gaias[gaias_inthis[yy]] = 1;
+        $(".to_emails").append('<input type="radio" name="temail" value="' + gaias_inthis[yy] + '"> ' + pps[gaias_inthis[yy]] + '<br>');
+      }
+    }
+    //$(".to_emails").append('<li style="text-align:left"> name ' + from_emails[key] + ' </li>');
+  }
+  $(".to_emails").append('<input id="who" type="button" value="Who are you?">');
+  setTimeout("$('.step2').remove(); $('h1').text('Your Chatbot is being synthesized!!!');", 200);
+  var final_gaias = Object.keys(chosen_gaias);
+  document.getElementById('who').addEventListener('click', function () {handlePersonSelect(final_gaias,pps,chosen_convo,jsn)}, false);
+}
+
+function handlePersonSelect(fnl_gs,pps,chosen_convo,jsn) {
+  var chosen_you = ($("input[name='temail']:checked")).val();
+  console.log(chosen_you);
+  if (chosen_you === undefined)
+    return 0;
+  var splice_index;
+  for (var xx = 0; xx < fnl_gs.length;xx++) {
+    if (chosen_you === fnl_gs[xx]) 
+      splice_index = xx;
+  }
+  fnl_gs.splice(splice_index,1);
+  var chosen_names = [];
+  for (var ii = 0; ii < fnl_gs.length;ii++) {
+    chosen_names.push(pps[fnl_gs[ii]]);
+  }
+  var chosen = chosen_names.join(" and ");
+  var conf = confirm('You have chosen to make a chatbot of ' + pps[chosen_you] + ' speaking to ' + chosen);
+  if (conf) {
+    setTimeout("$('.step3').remove(); $('h1').text('Your Chatbot is being synthesized!!!');", 200);
+    setTimeout(function () {json2createChatbot(chosen_you,chosen_convo,jsn);},300);
+    setTimeout("$('h1').text('');", 4000);
+  } else {
+  }
+}
+function json2createChatbot (chosen_you,chosen_convo,jsn) {
+  var mail_info = parseJson(chosen_you,chosen_convo,jsn);
+  lines = [];
+  var qual = testQuality(mail_info.persons);
+  var endquality = [average(qual[0]),average(qual[1]),average(qual[2]),average(qual[3]),average(qual[4]),average(qual[5]),average(qual[6])];
+  var endq_ind = [];
+  for (var ii = 0; ii < endquality.length;ii++) {
+    endq_ind.push(ii);
+  }
+  object.brainQuality = endq_ind.sort(function(a,b){return endquality[a]-endquality[b]});
+  console.log("brainQuality " + object.brainQuality);
+  bakeChatbot(mail_info.bots,mail_info.persons);
+  $(".download").append('<input id="createlink" type="button" value="Download chatbot brains">');
+
+ document.getElementById('createlink').addEventListener('click', function (evt) {
+    var json_url = makeTextFile(object);
+    if (json_url !== undefined) {
+      $(".download").append('<a download="object.json" id="downloadlink" href="' + json_url + '">object.json</a>'); 
+    }
+  }, false);
+  $(".chatbot").append('<div class="form-group"><textarea class="form-control status-box" rows="2" placeholder="Press enter to send your message."></textarea></div>'); 
+}
+
+function parseJson (chosen_you,chosen_convo,jsn) {
+  var one_mail = [];
+  var bot_words = [];
+  var person_words = [];
+  var mail_objects = {
+    bots: [],
+    persons: []
+  };
+
+  var conversations = jsn.conversation_state;
+  for (var xx = 0; xx < conversations.length;xx++) {
+    if (xx !== chosen_convo[0]) 
+      continue;
+    var chat_data = conversations[xx].conversation_state.event;
+
+    for (var yy = 0; yy < chat_data.length; yy++) {
+      //console.log(chat_data[yy].chat_message);
+      //var timeStamp = Number(chat_data[yy].timestamp);
+      //timeStamp /= 1000; // convert to milliseconds
+      //var time = new Date(timeStamp);
+      var sender = chat_data[yy].sender_id.gaia_id;
+      var mess;
+      if (chat_data[yy].chat_message !== undefined)
+        mess = chat_data[yy].chat_message.message_content.segment;
+      if (mess !== undefined) {
+        for (var zz = 0; zz < mess.length; zz++) {
+     //     console.log(mess[zz].text);
+          var txt = mess[zz].text;
+          if (txt !== undefined) {
+          var mail_words = mess[zz].text.split(/\s+/);
+          mail_words = cleanWords(mail_words);
+          if (sender === chosen_you) {
+            // use this message to train the speaking part of the brain
+//                for (var kk = 0; kk < mail_words.length; kk++) {
+//                  bot_words.push(mail_words[kk]);
+//                }
+            if (mail_words.length < 2) 
+              break;
+            mail_words.push('endend'); //mark end of message
+            // Hold on two first two words, as they'll be used to start messages for the chatbot
+            // link these first two words to previous message from the person using the bot object
+            var first_two_words = mail_words[0] + " " + mail_words[1];
+            mail_objects.bots[mail_objects.bots.length] = new bot(first_two_words,mail_objects.persons.length-1);
+
+            // Train the markov chain so the bot can speak. 
+            for (var kk = 0; kk < mail_words.length - 2; kk++) {
+              var two_words = mail_words[kk] + " " + mail_words[kk+1];
+              if (object.markov_word[two_words] === undefined) 
+                object.markov_word[two_words] = [];
+              object.markov_word[two_words].push(mail_words[kk+2]);
+            }
+          } else {
+            // use this message to train the listening part of the brain
+            // The beginning of the next "to" messages will be linked to the key generated from this message
+            // so that the brain knows how to respond to messages like this in the future.
+            //
+            mail_objects.persons[mail_objects.persons.length] = getBrains(mail_words);
+          }
+          }
+        }
+      }
+    }
+  }
+//  console.log(object.markov_word);
+  return mail_objects;
+}
+
 
 
 document.getElementById('files').addEventListener('change', handleFileSelect, false);
