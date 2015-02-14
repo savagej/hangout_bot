@@ -85,9 +85,7 @@ function handleFileSelect(evt) {
       getEmailAddresses(lines);
     } else if (file_to_read.name === 'Hangouts.json') {
       var file_object = JSON.parse(this.result);
-      console.log(file_object);
-      convos = getConversations(file_object);
-      console.log(convos);
+      getConversations(file_object);
     }
   }
   reader.onloadend = function(e) {
@@ -443,7 +441,6 @@ function getConversations(jsn) {
   for (var xx = 0; xx < conversations.length;xx++) {
     var chat_data = conversations[xx].conversation_state.event;
     var chat_people = conversations[xx].conversation_state.conversation.participant_data;
-    console.log("Conversation " + xx);
     names[xx] = [];
     gaias[xx] = [];
     num_messages[xx] = chat_data.length;
@@ -458,9 +455,16 @@ function getConversations(jsn) {
     }
   }
 
+  var ind = [];
+  for (var ii = 0; ii < names.length;ii++) {
+    ind.push(ii);
+  }
+  var sort_ind = ind.sort(function(a,b){return num_messages[b]-num_messages[a]});
+
   $(".from_emails").append('<p> All conversations. Choose which ones for your chatbot</p>');
   //$(".to_emails").append('<p style="text-align:left"> Names</p>');
-  for (var xx = 0; xx < names.length;xx++) {
+  for (var ii = 0; ii < names.length;ii++) {
+    var xx = sort_ind[ii];
     var addresses = names[xx].join(" ");
     $(".from_emails").append('<input type="checkbox" name="femail" value="' + xx + '"> ' + addresses + ' - total messages: ' + num_messages[xx] + '<br>');
     //$(".to_emails").append('<li style="text-align:left"> name ' + from_emails[key] + ' </li>');
@@ -479,7 +483,7 @@ function handleConvoSelect(gs,pps,jsn) {
     chosen_convo.push(convo_id);
   });
   var chosen_gaias = new Object;
-  $(".to_emails").append('<p style="text-align:left"> Names for your bot</p>');
+  //$(".to_emails").append('<p> Who is being turned into a bot?</p>');
   for (var xx = 0; xx < chosen_convo.length;xx++) {
     var gaias_inthis = gs[chosen_convo[xx]];
     for (var yy = 0; yy < gaias_inthis.length;yy++) {
@@ -490,15 +494,14 @@ function handleConvoSelect(gs,pps,jsn) {
     }
     //$(".to_emails").append('<li style="text-align:left"> name ' + from_emails[key] + ' </li>');
   }
-  $(".to_emails").append('<input id="who" type="button" value="Who are you?">');
-  setTimeout("$('.step2').remove(); $('h1').text('Your Chatbot is being synthesized!!!');", 200);
+  $(".to_emails").append('<input id="who" type="button" value="Choose a person">');
+  setTimeout("$('.step2').remove(); $('h1').text('Now choose who will be the bot.');", 200);
   var final_gaias = Object.keys(chosen_gaias);
   document.getElementById('who').addEventListener('click', function () {handlePersonSelect(final_gaias,pps,chosen_convo,jsn)}, false);
 }
 
 function handlePersonSelect(fnl_gs,pps,chosen_convo,jsn) {
   var chosen_you = ($("input[name='temail']:checked")).val();
-  console.log(chosen_you);
   if (chosen_you === undefined)
     return 0;
   var splice_index;
@@ -516,7 +519,7 @@ function handlePersonSelect(fnl_gs,pps,chosen_convo,jsn) {
   if (conf) {
     setTimeout("$('.step3').remove(); $('h1').text('Your Chatbot is being synthesized!!!');", 200);
     setTimeout(function () {json2createChatbot(chosen_you,chosen_convo,jsn);},300);
-    setTimeout("$('h1').text('');", 4000);
+    setTimeout("$('h1').text('Test how the chatbot works, and download the brains to use later in the Chat window.');", 4000);
   } else {
   }
 }
@@ -537,7 +540,7 @@ function json2createChatbot (chosen_you,chosen_convo,jsn) {
  document.getElementById('createlink').addEventListener('click', function (evt) {
     var json_url = makeTextFile(object);
     if (json_url !== undefined) {
-      $(".download").append('<a download="object.json" id="downloadlink" href="' + json_url + '">object.json</a>'); 
+      $(".download").append('<a download="chatbot_brains.json" id="downloadlink" href="' + json_url + '">Link to dowload chatbot_brains.json</a>'); 
     }
   }, false);
   $(".chatbot").append('<div class="form-group"><textarea class="form-control status-box" rows="2" placeholder="Press enter to send your message."></textarea></div>'); 

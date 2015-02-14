@@ -5,16 +5,7 @@ var object = {
   start_of_reply : [],
   brainQuality : []
 }
-//var markov_word;
-//$.getJSON("json/markov.data.json", function(jsons) {
-//  //console.log(jsons); // this will show the info it in firebug console
-//  markov_word = jsons;
-//});
-//var start_of_reply;
-//$.getJSON("json/last_words.data.json", function(jsons) {
-//  //console.log(jsons); // this will show the info it in firebug console
-//  start_of_reply = jsons;
-//});
+
 var maxLengthOfMessage = 20;
 
 var run_markov = function (inputText) {
@@ -135,7 +126,13 @@ function handleJsonSelect(evt) {
   jsonReader.onload = function(e) {
     var json = this.result;
     object = JSON.parse(json);
-    console.log(object);
+    //console.log(object);
+    $('.step1').remove();
+    $(".step2").removeClass("hidden");
+    $('h1').text('Chat to the bot!');
+    //setTimeout(function() {$('h1').animate({visibility: "hidden"})},1000);
+    //$('h1').animate({visibility: "hidden"});
+    setTimeout(function() {$('h1').hide(600)},1000);
   }
   // Read in the image file as text lines.
   jsonReader.readAsText(evt.target.files[0]);
