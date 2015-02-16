@@ -326,8 +326,8 @@ function shuffle(array) {
 function bakeChatbot (bm,pm) {
   for (var ii = 1; ii < bm.length; ii++) {
     var pm_number = bm[ii].prev_message_num;
-    if (pm_number === undefined) {
-      console.log(ii);
+    if ((pm_number === undefined) || (pm_number === -1)) {
+      console.log("Dodgy person mail number in baking - " + ii);
       continue;
     }
     for (var j = 0; j < 7; j ++) {
