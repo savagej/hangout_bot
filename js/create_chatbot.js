@@ -277,30 +277,50 @@ function parseEmails (f) {
 }
 
 function testQuality (pm) {
-  var quarter = parseInt(pm.length/4);
-  var q = [ [], [], [], [], [], [], [] ];
+  var shuffled = shuffle(pm);
+  var quarter = parseInt(shuffled.length/4);
+  var q = [];
 
-  for (var ii = 0; ii < 4; ii++) {
     for (var brn = 0; brn < 7; brn++)
-      q[brn][ii] = 0;
-    for (var kk = ii*quarter; kk < (ii+1)*quarter; kk++ ) {
-      var thisMail = pm[kk];
+      q[brn]= 0;
+    var kk = quarter;
+    while (kk--) {
+      var thisMail = shuffled[kk];
       for (var brn = 0; brn < 7; brn++) {
         var found = 0;
-        for (var jj = 0; jj < pm.length; jj++) {
-          if ( (jj >=ii*quarter) && (jj < (ii+1)*quarter) )
-            continue;
-          if (thisMail[brn] === pm[jj][brn])
+        var jj = shuffled.length;
+        while(jj-- > quarter) {
+          if (thisMail[brn] === shuffled[jj][brn]) {
             found = 1;
+            break;
+          }
         }
-        q[brn][ii] += found;
+        q[brn] += found;
       }
     }
     for (var brn = 0; brn < 7; brn++)
-      q[brn][ii] /= quarter;
-  }
+      q[brn] /= quarter;
   console.log(q);
   return q;
+}
+
+function shuffle(array) {
+  var currentIndex = array.length, temporaryValue, randomIndex ;
+
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
 }
 
 function bakeChatbot (bm,pm) {
@@ -527,12 +547,11 @@ function json2createChatbot (chosen_you,chosen_convo,jsn) {
   var mail_info = parseJson(chosen_you,chosen_convo,jsn);
   lines = [];
   var qual = testQuality(mail_info.persons);
-  var endquality = [average(qual[0]),average(qual[1]),average(qual[2]),average(qual[3]),average(qual[4]),average(qual[5]),average(qual[6])];
-  var endq_ind = [];
-  for (var ii = 0; ii < endquality.length;ii++) {
-    endq_ind.push(ii);
+  var q_ind = [];
+  for (var ii = 0; ii < qual.length;ii++) {
+    q_ind.push(ii);
   }
-  object.brainQuality = endq_ind.sort(function(a,b){return endquality[a]-endquality[b]});
+  object.brainQuality = q_ind.sort(function(a,b){return qual[a]-qual[b]});
   console.log("brainQuality " + object.brainQuality);
   bakeChatbot(mail_info.bots,mail_info.persons);
   $(".download").append('<input id="createlink" type="button" value="Download chatbot brains">');
