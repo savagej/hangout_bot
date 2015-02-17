@@ -19,7 +19,7 @@ There are two main parts to this bot's brain, speaking and listening. The speaki
 In this bot, the probability of words following each pair of words is determined by reading the messages written by the person that the bot is based on, so it should sound something like that person.
 
 The listening part was slightly more difficult to design. From a human's message given to the chatbot, the bot somehow has to decide what will be the first two words of its markov chain response.  
-The simplest way to train the bot is to take the last two words of every message in the archive that is sent to the person that the bot is based on, and link them to the first two words of the response of that message. For example, from this conversation exchange:
+The simplest way to train the bot is to take the last two words of every message in the archive that is sent to the person that the bot is based on, and link them to the first two words of the response to that message. For example, from this conversation exchange:
 
 Abbott: Strange as it may seem, they give ball players nowadays very peculiar names.  
 Costello: Funny names?  
@@ -37,7 +37,7 @@ Abbott: Who.
 Costello: The guy on first base.  
 Abbott: Who is on first.  
 
-If Costello is being turned into a chatbot, we would get the following linked pairs of words:
+If Costello is being turned into the bot, we would get the following linked pairs of words:
 
 ```
 "peculiar names." -> ["Funny names?"]
@@ -45,8 +45,10 @@ If Costello is being turned into a chatbot, we would get the following linked pa
 "Yes." -> ["Well, then","I mean"]
 "Who." -> ["The fellow","The guy"]
 ```
+Now if someone happens to send a message to the chatbot ending in "peculiar names" or "Yes." we know how to start our reply!!  
+Of course there's nothing special about the last two words of a message. What about the first and last? What about first, middle, and last? Should punctuation like question marks be included? Should [stopwords](http://en.wikipedia.org/wiki/Stop_words) like "I" or "the" be included? Or can we include all these options?  
 
-Now if any message to the chatbot ends in any of those 4 sets of words, we know how to start our reply!!
+My strategy is to include all of these options, and rank them by their specificity. For example, using first-middle-last gives you more information about the message, however it is less likely to give a match with a human message. Using just the first and last words gives you less information about the message but is more likely to match with a human message. We can test how specific a given type of "brain" is by choosing a random 25% of messages, and seeing how much of that 25% matches with the other 75% of messages. Obviously first-last-middle will match with less of the other 75% than first-last will. The "brains" are ranked by what fraction of the 25% of messages found matches, from lowest to highest. When a human message comes into the bot, the most specific brain is tried first. If there is a match, its paired words are used to start the reply. If there is no match, the bot continues down the list of brains until a match is found. If none of the brains match, the bot simply panics and chooses a random set of starting words!!
 
 ---
 The original chatbot testing in Perl is in the Perl_test folder.
