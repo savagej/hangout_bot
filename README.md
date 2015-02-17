@@ -53,9 +53,6 @@ If Costello is being turned into the bot, we would get the following linked pair
 "Who." -> ["The fellow","The guy"]
 ```
 Now if someone happens to send a message to the chatbot ending in "peculiar names." or "Yes." we know how to start our reply!!  
-Of course there's nothing special about the last two words of a message. What about using the first and last words of a message to link to the first words of the next message? What about the first, middle, and last words? Should punctuation like question marks be included? Should [stopwords](http://en.wikipedia.org/wiki/Stop_words) like "I" or "the" be included? Or can we include all these options?  
+Of course there's nothing special about the last two words of a message. What about using the first and last words of a message to link to the response? What about the first, middle, and last words? Should punctuation like question marks be included? Should [stopwords](http://en.wikipedia.org/wiki/Stop_words) like "I" or "the" be included? Or can we include all these options?  
 
 My strategy is to include all of these options, and rank them by their specificity. For example, using first-middle-last gives you more information about the message, however it is less likely to give a match with a human message. Using just the first and last words gives you less information about the message but is more likely to match with a human message. We can test how specific a given type of "brain" is by choosing a random 25% of messages in the archive, and check how many matches with the other 75% of messages we get. Obviously first-middle-last will match with less of the other 75% than first-last will. The "brains" are ranked by what fraction of the 25% of messages found matches, from lowest to highest. When a human message comes into the bot, the most specific brain is tried first. If there is a match, its paired words are used to start the reply. If there is no match, the bot continues down the list of brains until a match is found. If none of the brains match, the bot simply panics and chooses a random set of starting words!!
-
----
-The original chatbot testing in Perl is in the Perl_test folder.
