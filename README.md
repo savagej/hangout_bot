@@ -38,10 +38,13 @@ Costello: The guy on first base.
 Abbott: Who is on first.  
 
 If Costello is being turned into a chatbot, we would get the following linked pairs of words:
+
+```
 "peculiar names." -> ["Funny names?"]
 "on third--" -> ["That's what","You know"]
 "Yes." -> ["Well, then","I mean"]
 "Who." -> ["The fellow","The guy"]
+```
 
 Now if any message to the chatbot ends in any of those 4 sets of words, we know how to start our reply!!
 
